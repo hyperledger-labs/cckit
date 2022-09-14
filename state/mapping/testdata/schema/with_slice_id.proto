@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package schema;
+option go_package = "github.com/hyperledger-labs/cckit/state/mapping/testdata/schema";
+
+import "google/protobuf/timestamp.proto";
+
+message EntityWithSliceId {
+    repeated string id = 1;
+    google.protobuf.Timestamp some_date = 2;
+}

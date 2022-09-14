@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "github.com/hyperledger-labs/cckit/examples/cpaper_extended/schema";
+package examples.cpaper_extended.schema;
+
+import "google/protobuf/timestamp.proto";
+
+// Commercial Paper state entry
+message CommercialPaper {
+
+    enum State {
+        STATE_ISSUED = 0;
+        STATE_TRADING = 1;
+        STATE_REDEEMED = 2;
+    }
+
+    // Issuer and Paper number comprises composite primary key of Commercial paper entry
+    string issuer = 1;
+    string paper_number = 2;
+
+    string owner = 3;
+    google.protobuf.Timestamp issue_date = 4;
+    google.protobuf.Timestamp maturity_date = 5;
+    int32 face_value = 6;
+    State state = 7;
+
+    // Additional unique field for entry
+    string external_id = 8;
+}
+
+// CommercialPaperId identifier part
+message CommercialPaperId {
+    string issuer = 1;
+    string paper_number = 2;
+}
+
+// Container for returning multiple entities
+message CommercialPaperList {
+    repeated CommercialPaper items = 1;
+}

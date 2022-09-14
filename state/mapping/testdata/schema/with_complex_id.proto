@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package schema;
+option go_package = "github.com/hyperledger-labs/cckit/state/mapping/testdata/schema";
+
+import "google/protobuf/timestamp.proto";
+
+message EntityWithComplexId {
+    EntityComplexId id = 1;
+    google.protobuf.Timestamp some_date = 2;
+}
+
+// EntityComplexId
+message EntityComplexId {
+    repeated string id_part1 = 1;
+    string id_part2 = 2;
+    google.protobuf.Timestamp id_part3 = 3;
+}
