@@ -1,0 +1,748 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "chaincode.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/chaincode-instance/events": {
+      "get": {
+        "summary": "Chaincode events s",
+        "operationId": "ChaincodeInstanceEventsService_Events",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayChaincodeEvents"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "from_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "to_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "event_name",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ChaincodeInstanceEventsService"
+        ]
+      }
+    },
+    "/chaincode-instance/events-stream": {
+      "get": {
+        "summary": "Chaincode events stream",
+        "operationId": "ChaincodeInstanceEventsService_EventsStream",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/cckitgatewayChaincodeEvent"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of cckitgatewayChaincodeEvent"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "from_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "to_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "event_name",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "ChaincodeInstanceEventsService"
+        ]
+      }
+    },
+    "/chaincode-instance/exec": {
+      "post": {
+        "summary": "Exec: Query or Invoke",
+        "operationId": "ChaincodeInstanceService_Exec",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protosResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayChaincodeInstanceExecRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChaincodeInstanceService"
+        ]
+      }
+    },
+    "/chaincode-instance/invoke": {
+      "post": {
+        "summary": "Invoke chaincode on peers, according to endorsement policy and the SEND to orderer",
+        "operationId": "ChaincodeInstanceService_Invoke",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protosResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayChaincodeInstanceInvokeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChaincodeInstanceService"
+        ]
+      }
+    },
+    "/chaincode-instance/query": {
+      "get": {
+        "summary": "Query chaincode on home peer. Do NOT send to orderer.",
+        "operationId": "ChaincodeInstanceService_Query",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protosResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "input.args",
+            "description": "Input contains the arguments for invocation.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "byte"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "ChaincodeInstanceService"
+        ]
+      }
+    },
+    "/chaincode/events": {
+      "get": {
+        "summary": "Chaincode events",
+        "operationId": "ChaincodeEventsService_Events",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayChaincodeEvents"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "locator.chaincode",
+            "description": "Chaincode name.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "locator.channel",
+            "description": "Channel name.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "from_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "to_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "event_name",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ChaincodeEventsService"
+        ]
+      }
+    },
+    "/chaincode/events-stream": {
+      "get": {
+        "summary": "Chaincode events stream",
+        "operationId": "ChaincodeEventsService_EventsStream",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/cckitgatewayChaincodeEvent"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of cckitgatewayChaincodeEvent"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "locator.chaincode",
+            "description": "Chaincode name.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "locator.channel",
+            "description": "Channel name.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "from_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "to_block.num",
+            "description": "Block number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "event_name",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "ChaincodeEventsService"
+        ]
+      }
+    },
+    "/chaincode/exec": {
+      "post": {
+        "summary": "Exec: Query or Invoke",
+        "operationId": "ChaincodeService_Exec",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protosResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayChaincodeExecRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChaincodeService"
+        ]
+      }
+    },
+    "/chaincode/invoke": {
+      "post": {
+        "summary": "Invoke chaincode on peers, according to endorsement policy and the SEND to orderer",
+        "operationId": "ChaincodeService_Invoke",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protosResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayChaincodeInvokeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ChaincodeService"
+        ]
+      }
+    },
+    "/chaincode/query": {
+      "get": {
+        "summary": "Query chaincode on home peer. Do NOT send to orderer.",
+        "operationId": "ChaincodeService_Query",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/protosResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "locator.chaincode",
+            "description": "Chaincode name.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "locator.channel",
+            "description": "Channel name.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "input.args",
+            "description": "Input contains the arguments for invocation.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "byte"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "ChaincodeService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "cckitgatewayChaincodeEvent": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "$ref": "#/definitions/protosChaincodeEvent"
+        },
+        "block": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "tx_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payload": {
+          "$ref": "#/definitions/gatewayRawJson"
+        }
+      }
+    },
+    "gatewayBlockLimit": {
+      "type": "object",
+      "properties": {
+        "num": {
+          "type": "string",
+          "format": "int64",
+          "title": "Block number"
+        }
+      },
+      "title": "Block limit number for event stream subscription or event list\nValues can be negative"
+    },
+    "gatewayChaincodeEvents": {
+      "type": "object",
+      "properties": {
+        "locator": {
+          "$ref": "#/definitions/gatewayChaincodeLocator"
+        },
+        "from_block": {
+          "$ref": "#/definitions/gatewayBlockLimit"
+        },
+        "to_block": {
+          "$ref": "#/definitions/gatewayBlockLimit"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cckitgatewayChaincodeEvent"
+          }
+        }
+      }
+    },
+    "gatewayChaincodeExecRequest": {
+      "type": "object",
+      "properties": {
+        "locator": {
+          "$ref": "#/definitions/gatewayChaincodeLocator"
+        },
+        "type": {
+          "$ref": "#/definitions/gatewayInvocationType"
+        },
+        "input": {
+          "$ref": "#/definitions/gatewayChaincodeInput"
+        }
+      },
+      "title": "Chaincode execution specification"
+    },
+    "gatewayChaincodeInput": {
+      "type": "object",
+      "properties": {
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "byte"
+          },
+          "description": "Input contains the arguments for invocation."
+        },
+        "transient": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "byte"
+          },
+          "description": "TransientMap contains data (e.g. cryptographic material) that might be used\nto implement some form of application-level confidentiality. The contents\nof this field are supposed to always be omitted from the transaction and\nexcluded from the ledger."
+        }
+      },
+      "title": "Chaincode invocation input"
+    },
+    "gatewayChaincodeInstanceExecRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/gatewayInvocationType"
+        },
+        "input": {
+          "$ref": "#/definitions/gatewayChaincodeInput"
+        }
+      }
+    },
+    "gatewayChaincodeInstanceInvokeRequest": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "$ref": "#/definitions/gatewayChaincodeInput"
+        }
+      }
+    },
+    "gatewayChaincodeInvokeRequest": {
+      "type": "object",
+      "properties": {
+        "locator": {
+          "$ref": "#/definitions/gatewayChaincodeLocator"
+        },
+        "input": {
+          "$ref": "#/definitions/gatewayChaincodeInput"
+        }
+      }
+    },
+    "gatewayChaincodeLocator": {
+      "type": "object",
+      "properties": {
+        "chaincode": {
+          "type": "string",
+          "title": "Chaincode name"
+        },
+        "channel": {
+          "type": "string",
+          "title": "Channel name"
+        }
+      },
+      "title": "Chaincode locator - channel name and chaincode name"
+    },
+    "gatewayInvocationType": {
+      "type": "string",
+      "enum": [
+        "INVOCATION_TYPE_QUERY",
+        "INVOCATION_TYPE_INVOKE"
+      ],
+      "default": "INVOCATION_TYPE_QUERY",
+      "description": "- INVOCATION_TYPE_QUERY: Simulation\n - INVOCATION_TYPE_INVOKE: Simulation and applying to ledger",
+      "title": "Chaincode invocation type"
+    },
+    "gatewayRawJson": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "protosChaincodeEvent": {
+      "type": "object",
+      "properties": {
+        "chaincode_id": {
+          "type": "string"
+        },
+        "tx_id": {
+          "type": "string"
+        },
+        "event_name": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "title": "ChaincodeEvent is used for events and registrations that are specific to chaincode\nstring type - \"chaincode\""
+    },
+    "protosResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "integer",
+          "format": "int32",
+          "description": "A status code that should follow the HTTP status codes."
+        },
+        "message": {
+          "type": "string",
+          "description": "A message associated with the response code."
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte",
+          "description": "A payload that can be used to include metadata with this response."
+        }
+      },
+      "description": "A response with a representation similar to an HTTP response that can\nbe used within another message."
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "runtimeStreamError": {
+      "type": "object",
+      "properties": {
+        "grpc_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "http_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "http_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
