@@ -7,8 +7,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/hyperledger-labs/cckit/convert"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 // PanicIfError
@@ -39,15 +40,13 @@ func MustProtoUnmarshal(bb []byte, pm proto.Message) proto.Message {
 	return p
 }
 
-// MustProtoTimestamp, creates proto.Timestamp, panics if error
+// MustProtoTimestamp creates proto.Timestamp, panics if error
 func MustProtoTimestamp(t time.Time) *timestamp.Timestamp {
-	ts, err := ptypes.TimestampProto(t)
-	PanicIfError(err)
-	return ts
+	return timestamppb.New(t)
 }
 
-func MustConvertFromBytes(bb []byte, target interface{}) interface{} {
-	v, err := convert.FromBytes(bb, target)
+func MustConvertFromBytes(bb []byte, target interface{}, fromBytesConverter serialize.FromBytesConverter) interface{} {
+	v, err := fromBytesConverter.FromBytesTo(bb, target)
 	PanicIfError(err)
 	return v
 }

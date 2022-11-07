@@ -1,4 +1,4 @@
-package convert
+package serialize
 
 import (
 	"encoding/json"
@@ -7,16 +7,12 @@ import (
 	"strconv"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-chaincode-go/shim"
-	"github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/pkg/errors"
 )
 
-// FromBytes converts []byte to target interface
-func FromBytes(bb []byte, target interface{}) (result interface{}, err error) {
-	// create copy
-
+// fromBytes converts []byte to target interface
+func fromBytes(bb []byte, target interface{}) (result interface{}, err error) {
 	switch t := target.(type) {
+
 	case string:
 		return string(bb), nil
 	case []byte:
@@ -41,7 +37,10 @@ func FromBytes(bb []byte, target interface{}) (result interface{}, err error) {
 		return t.FromBytes(bb)
 
 	case proto.Message:
-		return ProtoUnmarshal(bb, t)
+		return BinaryProtoUnmarshal(bb, t)
+
+	case nil:
+		return bb, nil
 
 	default:
 		return FromBytesToStruct(bb, target)
@@ -74,30 +73,20 @@ func FromBytesToStruct(bb []byte, target interface{}) (result interface{}, err e
 	}
 }
 
-// JsonUnmarshalPtr unmarshalls []byte as json to pointer, and returns value pointed to
+// JSONUnmarshalPtr unmarshalls []byte as json to pointer, and returns value pointed to
 func JSONUnmarshalPtr(bb []byte, to interface{}) (result interface{}, err error) {
 	targetPtr := reflect.New(reflect.ValueOf(to).Elem().Type()).Interface()
 	err = json.Unmarshal(bb, targetPtr)
 	if err != nil {
-		return nil, fmt.Errorf(ErrUnableToConvertValueToStruct.Error())
+		return nil, ErrUnableToConvertValueToStruct
 	}
 	return reflect.Indirect(reflect.ValueOf(targetPtr)).Interface(), nil
 }
 
-// ProtoUnmarshal r unmarshalls []byte as proto.Message to pointer, and returns value pointed to
-func ProtoUnmarshal(bb []byte, messageType proto.Message) (message proto.Message, err error) {
-	msg := proto.Clone(messageType)
-	err = proto.Unmarshal(bb, msg)
-	if err != nil {
-		return nil, errors.Wrap(err, ErrUnableToConvertValueToStruct.Error())
-	}
-	return msg, nil
-}
-
 // FromResponse converts response.Payload to target
-func FromResponse(response peer.Response, target interface{}) (result interface{}, err error) {
-	if response.Status == shim.ERROR {
-		return nil, errors.New(response.Message)
-	}
-	return FromBytes(response.Payload, target)
-}
+//func FromResponse(response peer.Response, target interface{}) (result interface{}, err error) {
+//	if response.Status == shim.ERROR {
+//		return nil, errors.New(response.Message)
+//	}
+//	return fromBytes(response.Payload, target)
+//}

@@ -3,11 +3,8 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"reflect"
 
-	"github.com/hyperledger/fabric-protos-go/peer"
-
-	"github.com/hyperledger-labs/cckit/convert"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 // ChaincodeInvoker used in generated service gateway code
@@ -19,12 +16,23 @@ type (
 
 	ChaincodeInstanceServiceInvoker struct {
 		ChaincodeInstance ChaincodeInstanceServiceServer
+		Serializer        serialize.Serializer
 	}
 )
 
-func NewChaincodeInstanceServiceInvoker(ccInstance ChaincodeInstanceServiceServer) *ChaincodeInstanceServiceInvoker {
+// NewChaincodeInstanceServiceInvoker
+// todo: serializer _temporary_ optional parameter
+func NewChaincodeInstanceServiceInvoker(
+	ccInstance ChaincodeInstanceServiceServer, serializers ...serialize.Serializer) *ChaincodeInstanceServiceInvoker {
+
+	var serializer serialize.Serializer = serialize.DefaultSerializer
+	if len(serializers) > 0 {
+		serializer = serializers[0]
+	}
+
 	c := &ChaincodeInstanceServiceInvoker{
 		ChaincodeInstance: ccInstance,
+		Serializer:        serializer,
 	}
 
 	return c
@@ -33,9 +41,9 @@ func NewChaincodeInstanceServiceInvoker(ccInstance ChaincodeInstanceServiceServe
 func (c *ChaincodeInstanceServiceInvoker) Query(
 	ctx context.Context, fn string, args []interface{}, target interface{}) (interface{}, error) {
 
-	ccInput, err := ccInput(ctx, fn, args)
+	ccInput, err := ccInput(ctx, fn, args, c.Serializer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(`query: %w`, err)
 	}
 
 	res, err := c.ChaincodeInstance.Query(ctx, &ChaincodeInstanceQueryRequest{
@@ -45,15 +53,15 @@ func (c *ChaincodeInstanceServiceInvoker) Query(
 		return nil, err
 	}
 
-	return ccOutput(res, target)
+	return ccOutput(res, target, c.Serializer)
 }
 
 func (c *ChaincodeInstanceServiceInvoker) Invoke(
 	ctx context.Context, fn string, args []interface{}, target interface{}) (interface{}, error) {
 
-	ccInput, err := ccInput(ctx, fn, args)
+	ccInput, err := ccInput(ctx, fn, args, c.Serializer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(`invoke: %w`, err)
 	}
 
 	res, err := c.ChaincodeInstance.Invoke(ctx, &ChaincodeInstanceInvokeRequest{
@@ -63,39 +71,5 @@ func (c *ChaincodeInstanceServiceInvoker) Invoke(
 		return nil, err
 	}
 
-	return ccOutput(res, target)
-}
-
-func InvokerArgs(fn string, args []interface{}) ([][]byte, error) {
-	argsBytes, err := convert.ArgsToBytes(args...)
-	if err != nil {
-		return nil, fmt.Errorf(`invoker args: %w`, err)
-	}
-
-	return append([][]byte{[]byte(fn)}, argsBytes...), nil
-}
-
-func ccInput(ctx context.Context, fn string, args []interface{}) (*ChaincodeInput, error) {
-	argsBytes, err := InvokerArgs(fn, args)
-	if err != nil {
-		return nil, err
-	}
-	ccInput := &ChaincodeInput{
-		Args: argsBytes,
-	}
-
-	if ccInput.Transient, err = TransientFromContext(ctx); err != nil {
-		return nil, err
-	}
-
-	return ccInput, nil
-}
-
-func ccOutput(response *peer.Response, target interface{}) (res interface{}, err error) {
-	output, err := convert.FromBytes(response.Payload, target)
-	if err != nil {
-		return nil, fmt.Errorf(`convert output to=%s: %w`, reflect.TypeOf(target), err)
-	}
-
-	return output, nil
+	return ccOutput(res, target, c.Serializer)
 }

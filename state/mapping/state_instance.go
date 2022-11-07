@@ -1,6 +1,7 @@
 package mapping
 
 import (
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 )
 
@@ -8,17 +9,17 @@ type (
 	StateInstance struct {
 		// instance can be instance itself or key for instance
 		// key can be proto or Key ( []string )
-		instance    interface{}
-		stateMapper StateMapper
-		serializer  state.Serializer
+		instance         interface{}
+		stateMapper      StateMapper
+		toBytesConverter serialize.ToBytesConverter
 	}
 )
 
-func NewStateInstance(instance interface{}, stateMapper StateMapper, serializer state.Serializer) *StateInstance {
+func NewStateInstance(instance interface{}, stateMapper StateMapper, toBytesConverter serialize.ToBytesConverter) *StateInstance {
 	return &StateInstance{
-		instance:    instance,
-		stateMapper: stateMapper,
-		serializer:  serializer,
+		instance:         instance,
+		stateMapper:      stateMapper,
+		toBytesConverter: toBytesConverter,
 	}
 }
 
@@ -32,11 +33,11 @@ func (si *StateInstance) Key() (state.Key, error) {
 }
 
 func (si *StateInstance) Keys() ([]state.KeyValue, error) {
-	return si.stateMapper.Keys(si.instance)
+	return si.stateMapper.Keys(si.instance, si.toBytesConverter)
 }
 
 func (si *StateInstance) ToBytes() ([]byte, error) {
-	return si.serializer.ToBytes(si.instance)
+	return si.toBytesConverter.ToBytesFrom(si.instance)
 }
 
 func (si *StateInstance) Mapper() StateMapper {

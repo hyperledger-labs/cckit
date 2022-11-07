@@ -8,6 +8,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 )
 
@@ -48,7 +49,7 @@ type (
 	EventMappingOpt func(*EventMapping)
 
 	EventResolver interface {
-		Resolve(eventName string, payload []byte) (event interface{}, err error)
+		Resolve(eventName string, payload []byte, fromBytesConverter serialize.FromBytesConverter) (event interface{}, err error)
 	}
 )
 
@@ -86,7 +87,7 @@ func (emm EventMappings) Exists(entry interface{}) bool {
 	return err == nil
 }
 
-func (emm EventMappings) Map(entry interface{}) (instance *EventInstance, err error) {
+func (emm EventMappings) Map(entry interface{}, toBytesConverter serialize.ToBytesConverter) (instance *EventInstance, err error) {
 	mapping, err := emm.Get(entry)
 	if err != nil {
 		return nil, errors.Wrap(err, `mapping`)
@@ -94,16 +95,16 @@ func (emm EventMappings) Map(entry interface{}) (instance *EventInstance, err er
 
 	switch entry.(type) {
 	case proto.Message:
-		return NewEventInstance(entry, mapping, DefaultSerializer)
+		return NewEventInstance(entry, mapping, toBytesConverter)
 	default:
 		return nil, ErrEntryTypeNotSupported
 	}
 }
 
-func (emm EventMappings) Resolve(eventName string, payload []byte) (event interface{}, err error) {
+func (emm EventMappings) Resolve(eventName string, payload []byte, fromBytesConverter serialize.FromBytesConverter) (event interface{}, err error) {
 	for _, m := range emm {
 		if m.name == eventName {
-			return DefaultSerializer.FromBytes(payload, m.Schema())
+			return fromBytesConverter.FromBytesTo(payload, m.Schema())
 		}
 	}
 

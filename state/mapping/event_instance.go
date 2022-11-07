@@ -1,22 +1,22 @@
 package mapping
 
 import (
-	"github.com/hyperledger-labs/cckit/state"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 type (
 	EventInstance struct {
-		instance    interface{}
-		eventMapper EventMapper
-		serializer  state.Serializer
+		instance         interface{}
+		eventMapper      EventMapper
+		toBytesConverter serialize.ToBytesConverter
 	}
 )
 
-func NewEventInstance(instance interface{}, eventMapper EventMapper, serializer state.Serializer) (*EventInstance, error) {
+func NewEventInstance(instance interface{}, eventMapper EventMapper, toBytesConverter serialize.ToBytesConverter) (*EventInstance, error) {
 	return &EventInstance{
-		instance:    instance,
-		eventMapper: eventMapper,
-		serializer:  serializer,
+		instance:         instance,
+		eventMapper:      eventMapper,
+		toBytesConverter: toBytesConverter,
 	}, nil
 }
 
@@ -25,5 +25,5 @@ func (ei EventInstance) Name() (string, error) {
 }
 
 func (ei EventInstance) ToBytes() ([]byte, error) {
-	return ei.serializer.ToBytes(ei.instance)
+	return ei.toBytesConverter.ToBytesFrom(ei.instance)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 
 	"github.com/hyperledger-labs/cckit/extensions/encryption"
-	"github.com/hyperledger-labs/cckit/response"
+	"github.com/hyperledger-labs/cckit/router"
 	testcc "github.com/hyperledger-labs/cckit/testing"
 )
 
@@ -66,9 +66,9 @@ func (s *MockStub) Query(args ...interface{}) peer.Response {
 }
 
 func (s *MockStub) Init(args ...interface{}) peer.Response {
-	encArgs, err := encryption.EncryptArgs(s.EncKey, args...)
+	encArgs, err := encryption.EncryptArgs(s.EncKey, args, s.MockStub.Serializer)
 	if err != nil {
-		return response.Error(`unable to encrypt input args`)
+		return router.ErrorResponse(fmt.Errorf(`encrypt input args: %w`, err))
 	}
 	return s.MockStub.AddTransient(encryption.TransientMapWithKey(s.EncKey)).InitBytes(encArgs...)
 }

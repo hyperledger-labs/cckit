@@ -9,7 +9,7 @@ import (
 	"github.com/hyperledger-labs/cckit/router/param"
 )
 
-// Test interaction with external encrypted chaincode (payments)
+// NewExternaldCC Tests interaction with external encrypted chaincode (payments)
 // see example/payment
 func NewExternaldCC(encCCName, channelName string) *router.Chaincode {
 	r := router.New(`external`)
@@ -40,7 +40,8 @@ func NewExternaldCC(encCCName, channelName string) *router.Chaincode {
 
 			// payment state entry returns decrypted
 			return encryption.InvokeChaincode(c.Stub(), encKey,
-				encCCName, []interface{}{`debugStateGet`, []string(encPaymentKey)}, channelName, &schema.Payment{})
+				encCCName, []interface{}{`debugStateGet`, []string(encPaymentKey)}, channelName, &schema.Payment{},
+				c.Serializer())
 		}, param.String(`paymentType`), param.String(`paymentId`))
 
 	return router.NewChaincode(r)

@@ -56,7 +56,7 @@ var _ = Describe(`Testing`, func() {
 		It("Allow to get last event while chaincode invoke ", func() {
 
 			expectcc.ResponseOk(cc.From(Authority).Invoke(`carRegister`, cars.Payloads[0]))
-			event := expectcc.EventPayloadIs(cc.ChaincodeEvent, &cars.Car{}).(cars.Car)
+			event := expectcc.EventPayloadIs(cc.ChaincodeEvent, &cars.Car{}, cc.Serializer).(cars.Car)
 
 			Expect(cc.ChaincodeEvent.EventName).To(Equal(cars.CarRegisteredEvent))
 			Expect(event.Id).To(Equal(cars.Payloads[0].Id))
@@ -147,7 +147,7 @@ var _ = Describe(`Testing`, func() {
 				Authority, nil, ``)
 			Expect(err).NotTo(HaveOccurred())
 
-			carFromCC := testcc.MustConvertFromBytes(resp.Payload, &cars.Car{}).(cars.Car)
+			carFromCC := testcc.MustConvertFromBytes(resp.Payload, &cars.Car{}, cc.Serializer).(cars.Car)
 
 			Expect(carFromCC.Id).To(Equal(cars.Payloads[3].Id))
 			Expect(carFromCC.Title).To(Equal(cars.Payloads[3].Title))
@@ -173,7 +173,7 @@ var _ = Describe(`Testing`, func() {
 				Authority, nil)
 			Expect(err).NotTo(HaveOccurred())
 
-			carFromCC := testcc.MustConvertFromBytes(resp.Payload, &cars.Car{}).(cars.Car)
+			carFromCC := testcc.MustConvertFromBytes(resp.Payload, &cars.Car{}, cc.Serializer).(cars.Car)
 
 			Expect(carFromCC.Id).To(Equal(cars.Payloads[3].Id))
 			Expect(carFromCC.Title).To(Equal(cars.Payloads[3].Title))
@@ -187,7 +187,7 @@ var _ = Describe(`Testing`, func() {
 				Authority, nil)
 			Expect(err).NotTo(HaveOccurred())
 
-			carFromCC := testcc.MustConvertFromBytes(resp.Payload, &cars.Car{}).(cars.Car)
+			carFromCC := testcc.MustConvertFromBytes(resp.Payload, &cars.Car{}, cc.Serializer).(cars.Car)
 
 			Expect(carFromCC.Id).To(Equal(cars.Payloads[3].Id))
 			Expect(carFromCC.Title).To(Equal(cars.Payloads[3].Title))

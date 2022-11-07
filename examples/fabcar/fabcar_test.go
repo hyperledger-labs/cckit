@@ -110,7 +110,7 @@ var _ = Describe(`FabCar service`, func() {
 
 		It("disallow to delete maker", func() {
 			cc.Tx(func() {
-				ExpectErrorContain(`state entry not found: Maker | Nonexistent`)(fabCarCC.DeleteMaker(ctx, &fabcar.MakerName{Name: testdata.MakerNonexistent.Create.Name}))
+				ExpectErrorContain(`Maker | Nonexistent: state entry not found`)(fabCarCC.DeleteMaker(ctx, &fabcar.MakerName{Name: testdata.MakerNonexistent.Create.Name}))
 			})
 		})
 	})
@@ -126,7 +126,7 @@ var _ = Describe(`FabCar service`, func() {
 				carReq := testdata.Car1.CreateClone()
 
 				carReq.Make = testdata.MakerNonexistent.Create.Name
-				ExpectErrorContain(`maker is not created: state entry not found: Maker | Nonexistent`)(fabCarCC.CreateCar(ctx, carReq))
+				ExpectErrorContain(`Maker | Nonexistent: state entry not found`)(fabCarCC.CreateCar(ctx, carReq))
 			})
 		})
 
@@ -244,7 +244,7 @@ var _ = Describe(`FabCar service`, func() {
 				req := testdata.Car1.Clone()
 				req.Create.Make = testdata.MakerNonexistent.Create.Name
 
-				ExpectErrorContain(`state entry not found: Car | Nonexistent | Prius | 85322`)(fabCarCC.DeleteCar(ctx, &fabcar.CarId{Id: req.IdStrings()}))
+				ExpectErrorContain(`Car | Nonexistent | Prius | 85322: state entry not found`)(fabCarCC.DeleteCar(ctx, &fabcar.CarId{Id: req.IdStrings()}))
 			})
 		})
 
@@ -279,7 +279,7 @@ var _ = Describe(`FabCar service`, func() {
 			cc.Tx(func() {
 				req := testdata.Car1.Clone()
 				req.Updates[0].Id = carNonexistentIdString
-				ExpectErrorContain(`state entry not found: Car | Toyota | Prius | 85322 | Nonexistent`)(fabCarCC.UpdateCar(ctx, req.Updates[0]))
+				ExpectErrorContain(`Car | Toyota | Prius | 85322 | Nonexistent: state entry not found`)(fabCarCC.UpdateCar(ctx, req.Updates[0]))
 			})
 		})
 
@@ -328,7 +328,7 @@ var _ = Describe(`FabCar service`, func() {
 				req := testdata.Car1.Clone()
 
 				req.UpdateOwners[0].CarId = carNonexistentIdString
-				ExpectErrorContain(`state entry not found: Car | Toyota | Prius | 85322 | Nonexistent`)(fabCarCC.UpdateCarOwners(ctx, req.UpdateOwners[0]))
+				ExpectErrorContain(`Car | Toyota | Prius | 85322 | Nonexistent: state entry not found`)(fabCarCC.UpdateCarOwners(ctx, req.UpdateOwners[0]))
 			})
 		})
 
@@ -360,7 +360,7 @@ var _ = Describe(`FabCar service`, func() {
 					FirstName:  testdata.Car1.Updates[0].Owners[1].FirstName,
 					SecondName: testdata.Car1.Updates[0].Owners[1].SecondName,
 				}
-				ExpectErrorContain(`state entry not found: CarOwner | Toyota | Prius | 85322 | Nonexistent | Michel | Tailor`)(fabCarCC.DeleteCarOwner(ctx, carOwnerId))
+				ExpectErrorContain(`CarOwner | Toyota | Prius | 85322 | Nonexistent | Michel | Tailor: state entry not found`)(fabCarCC.DeleteCarOwner(ctx, carOwnerId))
 			})
 		})
 
@@ -396,7 +396,7 @@ var _ = Describe(`FabCar service`, func() {
 			cc.Tx(func() {
 				req := testdata.Car1.Clone()
 				req.UpdateDetails[0].CarId = carNonexistentIdString
-				ExpectErrorContain(`state entry not found: Car | Toyota | Prius | 85322 | Nonexistent`)(fabCarCC.UpdateCarDetails(ctx, req.UpdateDetails[0]))
+				ExpectErrorContain(`Car | Toyota | Prius | 85322 | Nonexistent: state entry not found`)(fabCarCC.UpdateCarDetails(ctx, req.UpdateDetails[0]))
 			})
 		})
 
@@ -425,7 +425,7 @@ var _ = Describe(`FabCar service`, func() {
 					CarId: carNonexistentIdString,
 					Type:  fabcar.DetailType_WHEELS,
 				}
-				ExpectErrorContain(`state entry not found: CarDetail | Toyota | Prius | 85322 | Nonexistent | WHEELS`)(fabCarCC.DeleteCarDetail(ctx, carDetailId))
+				ExpectErrorContain(`CarDetail | Toyota | Prius | 85322 | Nonexistent | WHEELS: state entry not found`)(fabCarCC.DeleteCarDetail(ctx, carDetailId))
 			})
 		})
 	})

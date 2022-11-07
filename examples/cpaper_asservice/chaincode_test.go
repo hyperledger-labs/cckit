@@ -136,14 +136,14 @@ var _ = Describe(`CommercialPaper`, func() {
 		})
 	})
 
-	Describe("Commercial Paper Encrypted lifecycle", func() {
-		It("Allow issuer to issue new commercial paper", func() {
-
-			expectcc.ResponseOk(mockstubEnc.Invoke(cpaper_asservice.CPaperServiceChaincode_Issue, testdata.Issue1))
-
-			// Validate event has been emitted with the transaction data, and event name and payload is encrypted
-			expectcc.EventStringerEqual(mockstubEnc.LastEvent(),
-				`IssueCommercialPaper`, testdata.Issue1)
-		})
-	})
+	//Describe("Commercial Paper Encrypted lifecycle", func() {
+	//	It("Allow issuer to issue new commercial paper", func() {
+	//
+	//		expectcc.ResponseOk(mockstubEnc.Invoke(cpaper_asservice.CPaperServiceChaincode_Issue, testdata.Issue1))
+	//
+	//		// Validate event has been emitted with the transaction data, and event name and payload is encrypted
+	//		expectcc.EventStringerEqual(mockstubEnc.LastEvent(),
+	//			`IssueCommercialPaper`, testdata.Issue1)
+	//	})
+	//})
 })

@@ -5,6 +5,8 @@ import (
 
 	"github.com/hyperledger/fabric-protos-go/peer"
 	g "github.com/onsi/gomega"
+
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 type (
@@ -48,8 +50,8 @@ func (r *TxRes) Is(expectedResult interface{}) *TxRes {
 }
 
 // ProduceEvent expects that tx produces event with particular payload
-func (r *TxRes) ProduceEvent(eventName string, eventPayload interface{}) *TxRes {
+func (r *TxRes) ProduceEvent(eventName string, eventPayload interface{}, fromBytesConverter serialize.FromBytesConverter) *TxRes {
 	r.HasNoError()
-	EventIs(r.Event, eventName, eventPayload)
+	EventIs(r.Event, eventName, eventPayload, fromBytesConverter)
 	return r
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 
-	"github.com/hyperledger-labs/cckit/convert"
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 
 // String creates middleware for converting to string chaincode method parameter
 func String(name string, argPoss ...int) router.MiddlewareFunc {
-	return Param(name, convert.TypeString, argPoss...)
+	return Param(name, serialize.TypeString, argPoss...)
 }
 
 func Strings(name string, argPoss ...int) router.MiddlewareFunc {
@@ -25,12 +25,12 @@ func Strings(name string, argPoss ...int) router.MiddlewareFunc {
 
 // Int creates middleware for converting to integer chaincode method parameter
 func Int(name string, argPoss ...int) router.MiddlewareFunc {
-	return Param(name, convert.TypeInt, argPoss...)
+	return Param(name, serialize.TypeInt, argPoss...)
 }
 
 // Bool creates middleware for converting to bool chaincode method parameter
 func Bool(name string, argPoss ...int) router.MiddlewareFunc {
-	return Param(name, convert.TypeBool, argPoss...)
+	return Param(name, serialize.TypeBool, argPoss...)
 }
 
 // Struct creates middleware for converting to struct chaincode method parameter
