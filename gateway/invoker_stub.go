@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 var ErrInvokeMethodNotAllowed = errors.New(`invoke method not allowed`)
@@ -20,16 +21,21 @@ type (
 	}
 
 	LocatorChaincodeStubInvoker struct {
-		Locator *ChaincodeLocator
+		Locator    *ChaincodeLocator
+		Serializer serialize.Serializer
 	}
 )
 
 func (c *LocatorChaincodeStubInvoker) Query(
 	stub shim.ChaincodeStubInterface, fn string, args []interface{}, target interface{}) (interface{}, error) {
 
-	argsBytes, err := InvokerArgs(fn, args)
+	// todo: remove hack
+	if c.Serializer == nil {
+		c.Serializer = serialize.DefaultSerializer
+	}
+	argsBytes, err := invokerArgs(fn, args, c.Serializer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(`query via stub: %w`, err)
 	}
 
 	// if target chaincode is encrypted we can only access to target chaincode via dummy `StateGet`,
@@ -42,5 +48,5 @@ func (c *LocatorChaincodeStubInvoker) Query(
 			c.Locator.Chaincode, c.Locator.Channel, errors.New(response.Message))
 	}
 
-	return ccOutput(&response, target)
+	return ccOutput(&response, target, c.Serializer)
 }

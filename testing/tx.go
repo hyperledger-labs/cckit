@@ -8,7 +8,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"go.uber.org/zap"
 
-	"github.com/hyperledger-labs/cckit/response"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/testing/expect"
 )
@@ -56,7 +55,7 @@ func (p *TxHandler) Invoke(invoke func(ctx router.Context) (interface{}, error))
 
 	p.MockStub.MockTransactionStart(uuid)
 	res, err := invoke(p.Context)
-	p.MockStub.TxResult = response.Create(res, err)
+	p.MockStub.TxResult = router.CreateResponse(res, err, p.MockStub.Serializer)
 	p.MockStub.MockTransactionEnd(uuid)
 
 	txRes := &TxResult{

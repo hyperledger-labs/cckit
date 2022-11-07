@@ -10,6 +10,7 @@ import (
 	"github.com/hyperledger/fabric/msp"
 
 	"github.com/hyperledger-labs/cckit/extensions/encryption"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state/mapping"
 )
 
@@ -103,10 +104,10 @@ func WithEventDecryption(encKey []byte) Opt {
 	}
 }
 
-func WithEventResolver(resolver mapping.EventResolver) Opt {
+func WithEventResolver(resolver mapping.EventResolver, fromBytesConverter serialize.FromBytesConverter) Opt {
 	return func(o *Opts) {
 		o.Event = append(o.Event, func(e *ChaincodeEvent) error {
-			eventPayload, err := resolver.Resolve(e.Event.EventName, e.Event.Payload)
+			eventPayload, err := resolver.Resolve(e.Event.EventName, e.Event.Payload, fromBytesConverter)
 			if err != nil {
 				return err
 			}

@@ -282,7 +282,7 @@ Most frequently used helpers are:
 * `ResponseOk` (*response* **peer.Response**) expects that peer response contains `ok` status code(`200`). Optionally you can pass either a `string` or an `OmegaMatcher` [any available matcher provided by Gomega](http://onsi.github.io/gomega/#provided-matchers), to check, for example, if the error contains a specific substring.
 * `ResponseError` (*response* **peer.Response**)  expects that peer response contains error status code (`500`). Optionally you can pass either a `string`, an `error` or an `OmegaMatcher` as for `ResponseOk`
 * `PayloadIs`(*response* **peer.Response**, *target* **interface{}) expects that peer response contains `ok` status code (`200`) 
-and converts response to **target** type using `CCKit` [convert](../convert) package
+and converts response to **target** type using `CCKit` [convert](../serialize) package
 
 For example we can simply test that `Init` method (invoked when the chaincode is initialised) returns successful status code: 
  

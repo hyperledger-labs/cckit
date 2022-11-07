@@ -1,9 +1,9 @@
-package convert_test
+package serialize_test
 
 import (
 	"testing"
 
-	"github.com/hyperledger-labs/cckit/convert"
+	"github.com/hyperledger-labs/cckit/serialize"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,39 +14,41 @@ func TestState(t *testing.T) {
 	RunSpecs(t, "State suite")
 }
 
-var _ = Describe(`Convert`, func() {
+var _ = Describe(`Generic serializer`, func() {
+
+	serializer := serialize.DefaultSerializer
 
 	It(`Bool`, func() {
-		bTrue, err := convert.ToBytes(true)
+		bTrue, err := serializer.ToBytesFrom(true)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bTrue).To(Equal([]byte(`true`)))
 
-		bFalse, err := convert.ToBytes(false)
+		bFalse, err := serializer.ToBytesFrom(false)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bFalse).To(Equal([]byte(`false`)))
 
-		eTrue, err := convert.FromBytes(bTrue, convert.TypeBool)
+		eTrue, err := serializer.FromBytesTo(bTrue, serialize.TypeBool)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(eTrue.(bool)).To(Equal(true))
 
-		eFalse, err := convert.FromBytes(bFalse, convert.TypeBool)
+		eFalse, err := serializer.FromBytesTo(bFalse, serialize.TypeBool)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(eFalse.(bool)).To(Equal(false))
 	})
 
 	It(`String`, func() {
 		const MyStr = `my-string`
-		bStr, err := convert.ToBytes(MyStr)
+		bStr, err := serializer.ToBytesFrom(MyStr)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bStr).To(Equal([]byte(MyStr)))
 
-		eStr, err := convert.FromBytes(bStr, convert.TypeString)
+		eStr, err := serializer.FromBytesTo(bStr, serialize.TypeString)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(eStr.(string)).To(Equal(MyStr))
 	})
 
 	It(`Nil`, func() {
-		bNil, err := convert.ToBytes(nil)
+		bNil, err := serializer.ToBytesFrom(nil)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bNil).To(Equal([]byte{}))
 	})

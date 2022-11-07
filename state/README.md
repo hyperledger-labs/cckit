@@ -157,7 +157,7 @@ type (
 * [Protobuf](https://developers.google.com/protocol-buffers/docs/gotutorial) golang struct
 
 
-Golang structs [automatically](../convert) marshals/ unmarshals using [json.Marshal](https://golang.org/pkg/encoding/json/#Marshal) and
+Golang structs [automatically](../serialize) marshals/ unmarshals using [json.Marshal](https://golang.org/pkg/encoding/json/#Marshal) and
 and [json.Umarshal](https://golang.org/pkg/encoding/json/#Unmarshal) methods. 
 [proto.Marshal](https://godoc.org/github.com/golang/protobuf/proto#Marshal) and 
 [proto.Unmarshal](https://godoc.org/github.com/golang/protobuf/proto#Unmarshal) is used to convert protobuf.

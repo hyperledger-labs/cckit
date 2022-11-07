@@ -3,6 +3,7 @@ package mapping
 import (
 	"strings"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 	"github.com/hyperledger-labs/cckit/state/schema"
 )
@@ -29,8 +30,8 @@ func NewKeyRef(target interface{}, idx string, refKey, pKey state.Key) *schema.K
 	return &schema.KeyRef{
 		Schema: strings.Join(SchemaNamespace(target), `-`),
 		Idx:    idx,
-		RefKey: []string(refKey),
-		PKey:   []string(pKey),
+		RefKey: refKey,
+		PKey:   pKey,
 	}
 }
 
@@ -38,18 +39,20 @@ func NewKeyRefID(target interface{}, idx string, refKey state.Key) *schema.KeyRe
 	return &schema.KeyRefId{
 		Schema: strings.Join(SchemaNamespace(target), `-`),
 		Idx:    idx,
-		RefKey: []string(refKey),
+		RefKey: refKey,
 	}
 }
 
-func NewKeyRefInstance(target interface{}, idx string, refKey, pKey state.Key) *StateInstance {
-	return NewStateInstance(NewKeyRef(target, idx, refKey, pKey), KeyRefMapper, DefaultSerializer)
+func NewKeyRefInstance(target interface{},
+	idx string, refKey, pKey state.Key, toBytesConverter serialize.ToBytesConverter) *StateInstance {
+	return NewStateInstance(NewKeyRef(target, idx, refKey, pKey), KeyRefMapper, toBytesConverter)
 }
 
-func NewKeyRefIDInstance(target interface{}, idx string, refKey state.Key) *StateInstance {
+func NewKeyRefIDInstance(target interface{},
+	idx string, refKey state.Key, toBytesConverter serialize.ToBytesConverter) *StateInstance {
 	return NewStateInstance(
 		NewKeyRefID(target, idx, refKey),
 		KeyRefIDMapper,
-		DefaultSerializer,
+		toBytesConverter,
 	)
 }

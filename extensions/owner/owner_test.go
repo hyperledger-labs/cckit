@@ -47,19 +47,21 @@ var _ = Describe(`Ownable`, func() {
 
 		It("Allow to set owner during chaincode init", func() {
 			//invoke chaincode method from authority actor
-			ownerEntry := expectcc.PayloadIs(cc1.From(Owner).Init(), &identity.Entry{}).(identity.Entry)
+			ownerEntry := expectcc.PayloadIs(cc1.From(Owner).Init(),
+				&identity.Entry{}, cc1.Serializer).(identity.Entry)
 			Expect(ownerEntry.GetSubject()).To(Equal(Owner.GetSubject()))
 		})
 
 		It("Owner not changed during chaincode upgrade", func() {
 			// cc upgrade
-			ownerAfterSecondInit := expectcc.PayloadIs(cc1.From(Someone).Init(), &identity.Entry{}).(identity.Entry)
+			ownerAfterSecondInit := expectcc.PayloadIs(cc1.From(Someone).Init(),
+				&identity.Entry{}, cc1.Serializer).(identity.Entry)
 			Expect(ownerAfterSecondInit.Subject).To(Equal(Owner.GetSubject()))
 		})
 
 		It("Owner can be queried", func() {
-			ownerIdentity := expectcc.PayloadIs(
-				cc1.From(Someone).Invoke(QueryMethod), &identity.Entry{}).(identity.Entry)
+			ownerIdentity := expectcc.PayloadIs(cc1.From(Someone).Invoke(QueryMethod),
+				&identity.Entry{}, cc1.Serializer).(identity.Entry)
 			Expect(ownerIdentity.GetSubject()).To(Equal(Owner.GetSubject()))
 			Expect(ownerIdentity.GetMSPIdentifier()).To(Equal(Owner.MspID))
 			Expect(ownerIdentity.GetPublicKey()).To(Equal(Owner.Cert.PublicKey))
@@ -70,14 +72,15 @@ var _ = Describe(`Ownable`, func() {
 
 		It("Allow to set owner during chaincode init", func() {
 			//invoke chaincode method from someone, but pass owner mspId and cert to init
-			ownerEntry := expectcc.PayloadIs(
-				cc2.From(Someone).Init(Owner.MspID, Owner.GetPEM()), &identity.Entry{}).(identity.Entry)
+			ownerEntry := expectcc.PayloadIs(cc2.From(Someone).Init(Owner.MspID, Owner.GetPEM()),
+				&identity.Entry{}, cc2.Serializer).(identity.Entry)
 			Expect(ownerEntry.GetSubject()).To(Equal(Owner.GetSubject()))
 		})
 
 		It("Owner not changed during chaincode upgrade", func() {
 			// cc upgrade
-			ownerAfterSecondInit := expectcc.PayloadIs(cc2.From(Someone).Init(), &identity.Entry{}).(identity.Entry)
+			ownerAfterSecondInit := expectcc.PayloadIs(cc2.From(Someone).Init(),
+				&identity.Entry{}, cc2.Serializer).(identity.Entry)
 			Expect(ownerAfterSecondInit.Subject).To(Equal(Owner.GetSubject()))
 		})
 		It("Disallow set owner twice", func() {
@@ -86,8 +89,8 @@ var _ = Describe(`Ownable`, func() {
 		})
 
 		It("Owner can be queried", func() {
-			ownerIdentity := expectcc.PayloadIs(
-				cc2.From(Someone).Invoke(QueryMethod), &identity.Entry{}).(identity.Entry)
+			ownerIdentity := expectcc.PayloadIs(cc2.From(Someone).Invoke(QueryMethod),
+				&identity.Entry{}, cc2.Serializer).(identity.Entry)
 			Expect(ownerIdentity.GetSubject()).To(Equal(Owner.GetSubject()))
 			Expect(ownerIdentity.GetMSPIdentifier()).To(Equal(Owner.MspID))
 			Expect(ownerIdentity.GetPublicKey()).To(Equal(Owner.Cert.PublicKey))

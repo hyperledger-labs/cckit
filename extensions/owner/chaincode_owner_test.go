@@ -87,7 +87,7 @@ var _ = Describe(`Chaincode owner`, func() {
 		It("Non owner receives error", func() {
 			cc.From(nonOwnerIdentity).Tx(func() {
 				cc.Expect(ownerSvc.GetOwnerByTxCreator(ctx, &emptypb.Empty{})).
-					HasError(`find owner by tx creator's msp_id and cert subject: state entry not found: ChaincodeOwner`)
+					HasError(`find owner by tx creator's msp_id and cert subject: get state with key=ChaincodeOwner`)
 			})
 		})
 

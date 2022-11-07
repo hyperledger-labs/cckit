@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/hyperledger-labs/cckit/convert"
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 )
 
@@ -15,6 +15,23 @@ var (
 	// ErrKeyNotDefinedInTransientMap occurs when key not defined in transient map
 	ErrKeyNotDefinedInTransientMap = errors.New(`encryption key is not defined in transient map`)
 )
+
+type (
+	Serializer struct {
+		// serializer without encryption
+		serializer serialize.Serializer
+		key        []byte
+	}
+)
+
+var _ serialize.Serializer = &Serializer{}
+
+func NewSerializer(serializer serialize.Serializer, key []byte) *Serializer {
+	return &Serializer{
+		serializer: serializer,
+		key:        key,
+	}
+}
 
 // State wrapper, encrypts the data before putting to state and
 // decrypts the data after getting from state
@@ -24,8 +41,7 @@ func State(c router.Context, key []byte) (state.State, error) {
 
 	s.UseKeyTransformer(KeyEncryptor(key))
 	s.UseKeyReverseTransformer(KeyDecryptor(key))
-	s.UseStateGetTransformer(FromBytesDecryptor(key))
-	s.UseStatePutTransformer(ToBytesEncryptor(key))
+	s.UseSerializer(NewSerializer(c.Serializer(), key))
 
 	return s, nil
 }
@@ -74,7 +90,7 @@ func KeyEncryptor(encryptKey []byte) state.KeyTransformer {
 		keyEnc := make(state.Key, len(key))
 
 		for i, p := range key {
-			keyPartEnc, err := Encrypt(encryptKey, p)
+			keyPartEnc, err := Encrypt(encryptKey, p, serialize.KeySerializer)
 			if err != nil {
 				return nil, fmt.Errorf(`encrypt key: %w`, err)
 			}
@@ -104,40 +120,32 @@ func KeyDecryptor(encryptKey []byte) state.KeyTransformer {
 	}
 }
 
-// FromBytesDecryptor returns state.FromBytesTransformer - used for decrypting data after reading from state
-func FromBytesDecryptor(key []byte) state.FromBytesTransformer {
-	return func(bb []byte, config ...interface{}) (interface{}, error) {
-		decrypted, err := Decrypt(key, bb)
-		if err != nil {
-			return nil, errors.Wrap(err, `decrypt bytes`)
-		}
-		if len(config) == 0 {
-			return decrypted, nil
-		}
-		return convert.FromBytes(decrypted, config[0])
+// FromBytesTo used for decrypting data after reading from state or receiving as argument
+func (s *Serializer) FromBytesTo(from []byte, target interface{}) (interface{}, error) {
+	decrypted, err := Decrypt(s.key, from)
+	if err != nil {
+		return nil, fmt.Errorf(`decrypt: %w`, err)
 	}
+
+	return s.serializer.FromBytesTo(decrypted, target)
+
 }
 
-// ToBytesEncryptor returns state.ToBytesTransformer - used for encrypting data for state
-func ToBytesEncryptor(key []byte) state.ToBytesTransformer {
-	return func(v interface{}, config ...interface{}) ([]byte, error) {
-		bb, err := convert.ToBytes(v)
-		if err != nil {
-			return nil, err
-		}
-		return Encrypt(key, bb)
+func (s *Serializer) ToBytesFrom(from interface{}) ([]byte, error) {
+	bb, err := s.serializer.ToBytesFrom(from)
+	if err != nil {
+		return nil, err
 	}
+
+	return EncryptBytes(s.key, bb)
 }
 
 // EncryptWithTransientKey encrypts val with key from transient map
-func EncryptWithTransientKey(c router.Context, val interface{}) (encrypted []byte, err error) {
-	var (
-		key []byte
-	)
-
-	if key, err = KeyFromTransient(c); err != nil {
-		return
+func EncryptWithTransientKey(ctx router.Context, val interface{}) ([]byte, error) {
+	key, err := KeyFromTransient(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return ToBytesEncryptor(key)(val)
+	return Encrypt(key, val, ctx.Serializer())
 }

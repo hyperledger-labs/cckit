@@ -9,6 +9,7 @@ func encryptIfEncodeKeyExists(encryptionRequired bool) router.MiddlewareFunc {
 		return func(ctx router.Context) (interface{}, error) {
 			res, err := pre(ctx)
 
+			// encrypt response only if method in Invoked, not queried
 			if err != nil || ctx.Handler().Type != router.MethodInvoke {
 				return res, err
 			}

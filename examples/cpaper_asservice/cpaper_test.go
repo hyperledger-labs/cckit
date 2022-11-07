@@ -90,7 +90,7 @@ var _ = Describe(`Commercial paper service`, func() {
 		cc.From(Buyer).Tx(func() {
 			cc.Expect(CPaper.Buy(ctx, testdata.Buy1)).
 				// Produce Event - no error and event name and payload check
-				ProduceEvent(`BuyCommercialPaper`, testdata.Buy1)
+				ProduceEvent(`BuyCommercialPaper`, testdata.Buy1, ctx.Serializer())
 		})
 
 		newState := proto.Clone(testdata.CpaperInState1).(*cpaper_asservice.CommercialPaper)
@@ -106,7 +106,7 @@ var _ = Describe(`Commercial paper service`, func() {
 		// Invoke example
 		cc.Invoke(func(c router.Context) (interface{}, error) {
 			return CPaper.Redeem(c, testdata.Redeem1)
-		}).Expect().ProduceEvent(`RedeemCommercialPaper`, testdata.Redeem1)
+		}).Expect().ProduceEvent(`RedeemCommercialPaper`, testdata.Redeem1, ctx.Serializer())
 
 		newState := proto.Clone(testdata.CpaperInState1).(*cpaper_asservice.CommercialPaper)
 		newState.State = cpaper_asservice.CommercialPaper_STATE_REDEEMED

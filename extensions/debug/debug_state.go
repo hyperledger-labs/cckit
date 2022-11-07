@@ -5,7 +5,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/hyperledger-labs/cckit/convert"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/state"
 )
@@ -50,12 +49,14 @@ func (s *StateService) ListKeys(ctx router.Context, prefix *Prefix) (*CompositeK
 }
 
 func (s *StateService) GetState(ctx router.Context, key *CompositeKey) (*Value, error) {
-	val, err := s.State(ctx).Get(key.Key)
+
+	stateInstance := s.State(ctx)
+	val, err := stateInstance.Get(key.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	bb, err := convert.ToBytes(val)
+	bb, err := stateInstance.Serializer().ToBytesFrom(val)
 	if err != nil {
 		return nil, err
 	}

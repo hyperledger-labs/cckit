@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"go.uber.org/zap"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 )
 
@@ -19,6 +20,8 @@ type (
 		Clone() Context
 
 		Stub() shim.ChaincodeStubInterface
+
+		Serializer() serialize.Serializer
 
 		// Client returns invoker ClientIdentity
 		Client() (cid.ClientIdentity, error)
@@ -37,24 +40,6 @@ type (
 
 		ReplaceArgs(args [][]byte) Context // replace args, for usage in preMiddleware
 		GetArgs() [][]byte
-
-		// Deprecated: Use Params instead.
-		Args() InterfaceMap
-
-		// Deprecated: Use Arg instead.
-		Arg(string) interface{}
-
-		// Deprecated: Use ParamString instead.
-		ArgString(string) string
-
-		// Deprecated: Use ParamBytes instead.
-		ArgBytes(string) []byte
-
-		// Deprecated: Use ParamInt instead.
-		ArgInt(string) int
-
-		// Deprecated: Use SetParam instead.
-		SetArg(string, interface{})
 
 		// Params returns parameter values.
 		Params() InterfaceMap
@@ -77,35 +62,28 @@ type (
 		// SetParam sets parameter value.
 		SetParam(name string, value interface{})
 
-		// Get retrieves data from the context.
-		Get(key string) interface{}
-		// Set saves data in the context.
-		Set(key string, value interface{})
-
-		// Deprecated: Use Event().Set() instead
-		SetEvent(string, interface{}) error
-
 		Event() state.Event
 		UseEvent(state.Event) Context
 	}
 
 	context struct {
-		stub    shim.ChaincodeStubInterface
-		handler *HandlerMeta
-		logger  *zap.Logger
-		state   state.State
-		event   state.Event
-		args    [][]byte
-		params  InterfaceMap
-		store   InterfaceMap
+		stub       shim.ChaincodeStubInterface
+		handler    *HandlerMeta
+		logger     *zap.Logger
+		state      state.State
+		event      state.Event
+		args       [][]byte
+		params     InterfaceMap
+		serializer serialize.Serializer
 	}
 )
 
 // NewContext creates new instance of router.Context
 func NewContext(stub shim.ChaincodeStubInterface, logger *zap.Logger) *context {
 	return &context{
-		stub:   stub,
-		logger: logger,
+		stub:       stub,
+		logger:     logger,
+		serializer: serialize.DefaultSerializer,
 	}
 }
 
@@ -126,8 +104,12 @@ func (c *context) Client() (cid.ClientIdentity, error) {
 	return cid.New(c.Stub())
 }
 
+func (c *context) Serializer() serialize.Serializer {
+	return c.serializer
+}
+
 func (c *context) Response() Response {
-	return ContextResponse{c}
+	return &ContextResponse{c}
 }
 
 func (c *context) Logger() *zap.Logger {
@@ -194,18 +176,8 @@ func (c *context) GetArgs() [][]byte {
 	return c.stub.GetArgs()
 }
 
-// Deprecated: Use Params instead.
-func (c *context) Args() InterfaceMap {
-	return c.Params()
-}
-
 func (c *context) Params() InterfaceMap {
 	return c.params
-}
-
-// Deprecated: Use SetParam instead.
-func (c *context) SetArg(name string, value interface{}) {
-	c.SetParam(name, value)
 }
 
 func (c *context) SetParam(name string, value interface{}) {
@@ -264,16 +236,16 @@ func (c *context) ParamInt32(name string) int32 {
 	return out
 }
 
-func (c *context) Set(key string, val interface{}) {
-	if c.store == nil {
-		c.store = make(InterfaceMap)
-	}
-	c.store[key] = val
-}
+//func (c *context) Set(key string, val interface{}) {
+//	if c.store == nil {
+//		c.store = make(InterfaceMap)
+//	}
+//	c.store[key] = val
+//}
 
-func (c *context) Get(key string) interface{} {
-	return c.store[key]
-}
+//func (c *context) Get(key string) interface{} {
+//	return c.store[key]
+//}
 
 func (c *context) SetEvent(name string, payload interface{}) error {
 	return c.Event().Set(name, payload)

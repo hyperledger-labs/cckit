@@ -3,14 +3,16 @@ package state
 import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 
-	"github.com/hyperledger-labs/cckit/convert"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 type (
 	// Event interface for working with events in chaincode
 	Event interface {
 		Set(entry interface{}, value ...interface{}) error
-		UseSetTransformer(ToBytesTransformer) Event
+		UseToBytesConverter(converter serialize.ToBytesConverter) Event
+		// 	ToBytesConverter todo: check neediness
+		ToBytesConverter() serialize.ToBytesConverter
 		UseNameTransformer(StringTransformer) Event
 	}
 
@@ -20,32 +22,36 @@ type (
 	// NameValue interface combines Name() as ToByter methods - event representation
 	NameValue interface {
 		Namer
-		convert.ToByter
+		serialize.ToBytesConverter
 	}
 
 	EventImpl struct {
-		stub            shim.ChaincodeStubInterface
-		NameTransformer StringTransformer
-		SetTransformer  ToBytesTransformer
+		stub             shim.ChaincodeStubInterface
+		nameTransformer  StringTransformer
+		toBytesConverter serialize.ToBytesConverter
 	}
 )
 
 // NewEvent creates wrapper on shim.ChaincodeStubInterface for working with events
 func NewEvent(stub shim.ChaincodeStubInterface) *EventImpl {
 	return &EventImpl{
-		stub:            stub,
-		NameTransformer: NameAsIs,
-		SetTransformer:  ConvertToBytes,
+		stub:             stub,
+		nameTransformer:  NameAsIs,
+		toBytesConverter: serialize.DefaultSerializer,
 	}
 }
 
-func (e *EventImpl) UseSetTransformer(tb ToBytesTransformer) Event {
-	e.SetTransformer = tb
+func (e *EventImpl) UseToBytesConverter(toBytesConverter serialize.ToBytesConverter) Event {
+	e.toBytesConverter = toBytesConverter
 	return e
 }
 
+func (e *EventImpl) ToBytesConverter() serialize.ToBytesConverter {
+	return e.toBytesConverter
+}
+
 func (e *EventImpl) UseNameTransformer(nt StringTransformer) Event {
-	e.NameTransformer = nt
+	e.nameTransformer = nt
 	return e
 }
 
@@ -55,12 +61,12 @@ func (e *EventImpl) Set(entry interface{}, values ...interface{}) error {
 		return err
 	}
 
-	nameStr, err := e.NameTransformer(name)
+	nameStr, err := e.nameTransformer(name)
 	if err != nil {
 		return err
 	}
 
-	bb, err := e.SetTransformer(value)
+	bb, err := e.toBytesConverter.ToBytesFrom(value)
 	if err != nil {
 		return err
 	}

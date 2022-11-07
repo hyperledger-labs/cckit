@@ -50,7 +50,7 @@ func invokePaymentCreateManualEncryptWithMapping(c router.Context) (interface{},
 	returnVal = []byte(paymentId)
 	// return encrypted val if key provided
 	if key, _ := encryption.KeyFromTransient(c); key != nil {
-		returnVal, err = encryption.Encrypt(key, paymentId)
+		returnVal, err = encryption.Encrypt(key, paymentId, c.Serializer())
 	}
 
 	if e, err = encryption.EventWithTransientKeyIfProvided(c); err != nil {

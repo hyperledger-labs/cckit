@@ -9,6 +9,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/pkg/errors"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state/schema"
 )
 
@@ -35,14 +36,14 @@ func NewStateList(config ...interface{}) (sl *StateList, err error) {
 }
 
 func (sl *StateList) Fill(
-	iter shim.StateQueryIteratorInterface, fromBytes FromBytesTransformer) (list interface{}, err error) {
+	iter shim.StateQueryIteratorInterface, fromBytesConverter serialize.FromBytesConverter) (list interface{}, err error) {
 
 	for iter.HasNext() {
 		kv, err := iter.Next()
 		if err != nil {
 			return nil, err
 		}
-		item, err := fromBytes(kv.Value, sl.itemTarget)
+		item, err := fromBytesConverter.FromBytesTo(kv.Value, sl.itemTarget)
 		if err != nil {
 			return nil, errors.Wrap(err, `transform list entry`)
 		}

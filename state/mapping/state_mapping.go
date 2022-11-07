@@ -8,11 +8,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
-)
-
-var (
-	DefaultSerializer = &state.ProtoSerializer{}
 )
 
 type (
@@ -32,7 +29,7 @@ type (
 		// PrimaryKey returns primary key for entry
 		PrimaryKey(instance interface{}) (key state.Key, err error)
 		// Keys returns additional keys for
-		Keys(instance interface{}) (key []state.KeyValue, err error)
+		Keys(instance interface{}, toBytesConverter serialize.ToBytesConverter) (key []state.KeyValue, err error)
 		//KeyerFor returns target entity if mapper is key mapper
 		KeyerFor() (schema interface{})
 		Indexes() []*StateIndex
@@ -149,7 +146,7 @@ func (smm StateMappings) PrimaryKey(entry interface{}) (pkey state.Key, err erro
 	return m.PrimaryKey(entry)
 }
 
-func (smm StateMappings) Map(entry interface{}) (instance *StateInstance, err error) {
+func (smm StateMappings) Map(entry interface{}, toBytesConverter serialize.ToBytesConverter) (instance *StateInstance, err error) {
 	mapper, err := smm.Get(entry)
 	if err != nil {
 		return nil, errors.Wrap(err, `mapping`)
@@ -157,24 +154,26 @@ func (smm StateMappings) Map(entry interface{}) (instance *StateInstance, err er
 
 	switch entry.(type) {
 	case proto.Message, []string:
-		return NewStateInstance(entry, mapper, DefaultSerializer), nil
+		return NewStateInstance(entry, mapper, toBytesConverter), nil
 	default:
 		return nil, ErrEntryTypeNotSupported
 	}
 }
 
-func (smm StateMappings) Resolve(objectType string, value []byte) (entry interface{}, err error) {
+func (smm StateMappings) Resolve(objectType string,
+	value []byte, fromBytesConverter serialize.FromBytesConverter) (entry interface{}, err error) {
 	mapper, err := smm.GetByNamespace(state.Key{objectType})
 	if err != nil {
 		return nil, err
 	}
 
-	return DefaultSerializer.FromBytes(value, mapper.Schema())
+	return fromBytesConverter.FromBytesTo(value, mapper.Schema())
 }
 
 //
-func (smm *StateMappings) IdxKey(entity interface{}, idx string, idxVal state.Key) (state.Key, error) {
-	keyMapped := NewKeyRefIDInstance(entity, idx, idxVal)
+func (smm *StateMappings) IdxKey(entity interface{},
+	idx string, idxVal state.Key, toBytesConverter serialize.ToBytesConverter) (state.Key, error) {
+	keyMapped := NewKeyRefIDInstance(entity, idx, idxVal, toBytesConverter)
 	return keyMapped.Key()
 }
 
@@ -211,7 +210,7 @@ func (sm *StateMapping) PrimaryKey(entity interface{}) (state.Key, error) {
 }
 
 // Keys prepares primary and additional uniq/non-uniq keys for storage
-func (sm *StateMapping) Keys(entity interface{}) ([]state.KeyValue, error) {
+func (sm *StateMapping) Keys(entity interface{}, toBytesConverter serialize.ToBytesConverter) ([]state.KeyValue, error) {
 	if len(sm.indexes) == 0 {
 		return nil, nil
 	}
@@ -231,7 +230,7 @@ func (sm *StateMapping) Keys(entity interface{}) ([]state.KeyValue, error) {
 
 		for _, key := range idxKeys {
 			// key will be <`_idx`,{SchemaName},{idxName}, {Key[1]},... {Key[n}}>s
-			stateKeys = append(stateKeys, NewKeyRefInstance(sm.schema, idx.Name, key, pk))
+			stateKeys = append(stateKeys, NewKeyRefInstance(sm.schema, idx.Name, key, pk, toBytesConverter))
 		}
 	}
 

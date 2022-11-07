@@ -1,10 +1,12 @@
 package erc20
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 
 	"github.com/hyperledger-labs/cckit/identity"
 	r "github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
+	"github.com/hyperledger-labs/cckit/state"
 )
 
 const (
@@ -45,7 +47,7 @@ func queryTotalSupply(c r.Context) (interface{}, error) {
 }
 
 func queryBalanceOf(c r.Context) (interface{}, error) {
-	return getBalance(c, c.ArgString(`mspId`), c.ArgString(`certId`))
+	return getBalance(c, c.ParamString(`mspId`), c.ParamString(`certId`))
 }
 
 func invokeTransfer(c r.Context) (interface{}, error) {
@@ -94,7 +96,7 @@ func invokeTransfer(c r.Context) (interface{}, error) {
 	}
 
 	// Trigger event with name "transfer" and payload - serialized to json Transfer structure
-	if err = c.SetEvent(`transfer`, &Transfer{
+	if err = c.Event().Set(`transfer`, &Transfer{
 		From: identity.Id{
 			MSP:  invoker.GetMSPIdentifier(),
 			Cert: invoker.GetID(),
@@ -133,7 +135,7 @@ func invokeApprove(c r.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	if err = c.SetEvent(`approve`, &Approve{
+	if err = c.Event().Set(`approve`, &Approve{
 		From: identity.Id{
 			MSP:  invoker.GetMSPIdentifier(),
 			Cert: invoker.GetID(),
@@ -239,7 +241,15 @@ func allowanceKey(ownerMspId, ownerCertId, spenderMspId, spenderCertId string) [
 }
 
 func getBalance(c r.Context, mspId, certId string) (int, error) {
-	return c.State().GetInt(balanceKey(mspId, certId), 0)
+	res, err := c.State().Get(balanceKey(mspId, certId), serialize.TypeInt)
+	if err != nil {
+		if errors.Is(err, state.ErrKeyNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return res.(int), nil
 }
 
 // setBalance puts balance value to state
@@ -249,7 +259,15 @@ func setBalance(c r.Context, mspId, certId string, balance int) error {
 
 // getAllowance gets amount of token allowed by wallet owner to spend by spender
 func getAllowance(c r.Context, ownerMspId, ownerCertId, spenderMspId, spenderCertId string) (int, error) {
-	return c.State().GetInt(allowanceKey(ownerMspId, ownerCertId, spenderMspId, spenderCertId), 0)
+	res, err := c.State().Get(allowanceKey(ownerMspId, ownerCertId, spenderMspId, spenderCertId), serialize.TypeInt)
+	if err != nil {
+		if errors.Is(err, state.ErrKeyNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return res.(int), nil
 }
 
 func setAllowance(c r.Context, ownerMspId, ownerCertId, spenderMspId, spenderCertId string, amount int) error {
