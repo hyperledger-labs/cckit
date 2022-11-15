@@ -30,7 +30,13 @@ var (
 )
 
 func (g *GenericSerializer) ToBytesFrom(entry interface{}) ([]byte, error) {
-	return toBytes(entry)
+	switch entryType := entry.(type) {
+	case Serializable:
+		return entryType.ToBytes(g)
+	default:
+		return toBytes(entry)
+	}
+
 }
 
 func (g *GenericSerializer) FromBytesTo(serialized []byte, target interface{}) (interface{}, error) {

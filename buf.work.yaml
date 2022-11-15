@@ -3,5 +3,6 @@ directories:
   - examples
   - extensions
   - gateway
+  - serialize
   - state
   - third_party

@@ -54,7 +54,7 @@ func (s *Impl) MappingNamespace(schema interface{}) (state.Key, error) {
 }
 
 func (s *Impl) Get(entry interface{}, target ...interface{}) (interface{}, error) {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.Get(entry, target...) // return as is
 	}
@@ -74,7 +74,7 @@ func (s *Impl) Get(entry interface{}, target ...interface{}) (interface{}, error
 }
 
 func (s *Impl) GetHistory(entry interface{}, target interface{}) (state.HistoryEntryList, error) {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.GetHistory(entry, target) // return as is
 	}
@@ -83,7 +83,7 @@ func (s *Impl) GetHistory(entry interface{}, target interface{}) (state.HistoryE
 }
 
 func (s *Impl) Exists(entry interface{}) (bool, error) {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.Exists(entry) // return as is
 	}
@@ -92,7 +92,7 @@ func (s *Impl) Exists(entry interface{}) (bool, error) {
 }
 
 func (s *Impl) Put(entry interface{}, value ...interface{}) error {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.Put(entry, value...) // return as is
 	}
@@ -111,7 +111,7 @@ func (s *Impl) Put(entry interface{}, value ...interface{}) error {
 		if err == nil { // prev exists
 
 			// prev entry exists, calculate refs to delete and to insert
-			prevMapped, err := s.mappings.Map(prevEntry, s.Serializer())
+			prevMapped, err := s.mappings.Map(prevEntry)
 			if err != nil {
 				return errors.Wrap(err, `get prev`)
 			}
@@ -149,7 +149,7 @@ func (s *Impl) Put(entry interface{}, value ...interface{}) error {
 }
 
 func (s *Impl) Insert(entry interface{}, value ...interface{}) error {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.Insert(entry, value...) // return as is
 	}
@@ -270,7 +270,7 @@ func (s *Impl) Delete(entry interface{}) error {
 		return err
 	}
 
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func (s *Impl) UseKeyTransformer(kt state.KeyTransformer) {
 }
 
 func (s *Impl) GetPrivate(collection string, entry interface{}, target ...interface{}) (result interface{}, err error) {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.GetPrivate(collection, entry, target...) // return as is
 	}
@@ -309,7 +309,7 @@ func (s *Impl) GetPrivate(collection string, entry interface{}, target ...interf
 
 func (s *Impl) DeletePrivate(collection string, entry interface{}) (err error) {
 
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.DeletePrivate(collection, entry) // return as is
 	}
@@ -332,7 +332,7 @@ func (s *Impl) ListPrivate(collection string, usePrivateDataIterator bool, names
 }
 
 func (s *Impl) InsertPrivate(collection string, entry interface{}, value ...interface{}) (err error) {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.InsertPrivate(collection, entry, value...) // return as is
 	}
@@ -353,7 +353,7 @@ func (s *Impl) InsertPrivate(collection string, entry interface{}, value ...inte
 }
 
 func (s *Impl) PutPrivate(collection string, entry interface{}, value ...interface{}) (err error) {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.PutPrivate(collection, entry, value...) // return as is
 	}
@@ -376,7 +376,7 @@ func (s *Impl) PutPrivate(collection string, entry interface{}, value ...interfa
 }
 
 func (s *Impl) ExistsPrivate(collection string, entry interface{}) (exists bool, err error) {
-	mapped, err := s.mappings.Map(entry, s.Serializer())
+	mapped, err := s.mappings.Map(entry)
 	if err != nil { // mapping is not exists
 		return s.State.ExistsPrivate(collection, entry) // return as is
 	}

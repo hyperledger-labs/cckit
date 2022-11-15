@@ -43,9 +43,8 @@ func NewKeyRefID(target interface{}, idx string, refKey state.Key) *schema.KeyRe
 	}
 }
 
-func NewKeyRefInstance(target interface{},
-	idx string, refKey, pKey state.Key, toBytesConverter serialize.ToBytesConverter) *StateInstance {
-	return NewStateInstance(NewKeyRef(target, idx, refKey, pKey), KeyRefMapper, toBytesConverter)
+func NewKeyRefInstance(target interface{}, idx string, refKey, pKey state.Key) *StateInstance {
+	return NewStateInstance(NewKeyRef(target, idx, refKey, pKey), KeyRefMapper)
 }
 
 func NewKeyRefIDInstance(target interface{},
@@ -53,6 +52,5 @@ func NewKeyRefIDInstance(target interface{},
 	return NewStateInstance(
 		NewKeyRefID(target, idx, refKey),
 		KeyRefIDMapper,
-		toBytesConverter,
 	)
 }

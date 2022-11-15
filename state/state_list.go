@@ -37,7 +37,6 @@ func NewStateList(config ...interface{}) (sl *StateList, err error) {
 
 func (sl *StateList) Fill(
 	iter shim.StateQueryIteratorInterface, fromBytesConverter serialize.FromBytesConverter) (list interface{}, err error) {
-
 	for iter.HasNext() {
 		kv, err := iter.Next()
 		if err != nil {

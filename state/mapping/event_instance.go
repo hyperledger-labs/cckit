@@ -6,24 +6,22 @@ import (
 
 type (
 	EventInstance struct {
-		instance         interface{}
-		eventMapper      EventMapper
-		toBytesConverter serialize.ToBytesConverter
+		instance interface{}
+		mapper   EventMapper
 	}
 )
 
-func NewEventInstance(instance interface{}, eventMapper EventMapper, toBytesConverter serialize.ToBytesConverter) (*EventInstance, error) {
+func NewEventInstance(instance interface{}, mapper EventMapper) (*EventInstance, error) {
 	return &EventInstance{
-		instance:         instance,
-		eventMapper:      eventMapper,
-		toBytesConverter: toBytesConverter,
+		instance: instance,
+		mapper:   mapper,
 	}, nil
 }
 
-func (ei EventInstance) Name() (string, error) {
-	return ei.eventMapper.Name(ei.instance)
+func (ei *EventInstance) Name() (string, error) {
+	return ei.mapper.Name(ei.instance)
 }
 
-func (ei EventInstance) ToBytes() ([]byte, error) {
-	return ei.toBytesConverter.ToBytesFrom(ei.instance)
+func (ei *EventInstance) ToBytes(toBytesConverter serialize.ToBytesConverter) ([]byte, error) {
+	return toBytesConverter.ToBytesFrom(ei.instance)
 }

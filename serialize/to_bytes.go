@@ -29,7 +29,9 @@ func toBytes(value interface{}) ([]byte, error) {
 	case uint, int, int32:
 		return []byte(fmt.Sprint(v)), nil
 	case []byte:
-		return v, nil
+		bb := make([]byte, len(v))
+		copy(bb, v)
+		return bb, nil
 
 	default:
 		valueType := reflect.TypeOf(value).Kind()

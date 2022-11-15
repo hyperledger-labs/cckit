@@ -23,14 +23,14 @@ func StringsIdFromStr(idString string) []string {
 type (
 	Key []string
 
-	// StateKey stores origin and transformed state key
+	// TransformedKey stores origin and transformed state key
 	TransformedKey struct {
 		Origin Key
 		Parts  Key
 		String string
 	}
 
-	//KeyerFunc func(string) ([]string, error)
+	//KeyFunc func(string) ([]string, error)
 	KeyFunc func() (Key, error)
 
 	// KeyerFunc transforms string to key
@@ -46,10 +46,10 @@ type (
 		Key() ([]string, error)
 	}
 
-	// KeyValue interface combines Keyer as ToByter methods - state entry representation
+	// KeyValue interface combines Keyer as ToByter(Serializer) methods - state entry representation
 	KeyValue interface {
 		Keyer
-		serialize.ToByter
+		serialize.Serializable
 	}
 
 	stringKeyer struct {

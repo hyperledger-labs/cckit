@@ -16,16 +16,6 @@ var (
 	ErrKeyNotDefinedInTransientMap = errors.New(`encryption key is not defined in transient map`)
 )
 
-type (
-	Serializer struct {
-		// serializer without encryption
-		serializer serialize.Serializer
-		key        []byte
-	}
-)
-
-var _ serialize.Serializer = &Serializer{}
-
 func NewSerializer(serializer serialize.Serializer, key []byte) *Serializer {
 	return &Serializer{
 		serializer: serializer,
@@ -118,26 +108,6 @@ func KeyDecryptor(encryptKey []byte) state.KeyTransformer {
 		}
 		return keyEnc, nil
 	}
-}
-
-// FromBytesTo used for decrypting data after reading from state or receiving as argument
-func (s *Serializer) FromBytesTo(from []byte, target interface{}) (interface{}, error) {
-	decrypted, err := Decrypt(s.key, from)
-	if err != nil {
-		return nil, fmt.Errorf(`decrypt: %w`, err)
-	}
-
-	return s.serializer.FromBytesTo(decrypted, target)
-
-}
-
-func (s *Serializer) ToBytesFrom(from interface{}) ([]byte, error) {
-	bb, err := s.serializer.ToBytesFrom(from)
-	if err != nil {
-		return nil, err
-	}
-
-	return EncryptBytes(s.key, bb)
 }
 
 // EncryptWithTransientKey encrypts val with key from transient map

@@ -34,7 +34,7 @@ func (e *EventImpl) mapIfMappingExists(entry interface{}) (mapped interface{}, e
 	if !e.mappings.Exists(entry) {
 		return entry, false, nil
 	}
-	mapped, err = e.mappings.Map(entry, e.event.ToBytesConverter())
+	mapped, err = e.mappings.Map(entry)
 	return mapped, true, err
 }
 

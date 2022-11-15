@@ -10,7 +10,7 @@ import (
 	m "github.com/hyperledger-labs/cckit/state/mapping"
 )
 
-// Chaincode with required encrypting (encrypting key must be provided in transient map)
+// NewEncryptPaymentCC Chaincode with required encrypting (encrypting key must be provided in transient map)
 // WITHOUT mapping
 func NewEncryptPaymentCC() *router.Chaincode {
 	r := router.New(`encrypted`).
@@ -52,14 +52,14 @@ func invokePaymentCreateManualEncryptWithoutMapping(c router.Context) (interface
 		returnVal, err = encryption.Encrypt(key, paymentId, c.Serializer())
 	}
 
+	stateKey := []string{`PaymentManual`, paymentType, paymentId}
+	stateData := &schema.Payment{
+		Type:   paymentType,
+		Id:     paymentId,
+		Amount: int32(paymentAmount)}
+
 	// manually set key
-	return returnVal, s.Put(
-		[]string{`PaymentManual`, paymentType, paymentId},
-		&schema.Payment{
-			Type:   paymentType,
-			Id:     paymentId,
-			Amount: int32(paymentAmount)},
-	)
+	return returnVal, s.Put(stateKey, stateData)
 }
 
 func queryPaymentsWithoutMapping(c router.Context) (interface{}, error) {

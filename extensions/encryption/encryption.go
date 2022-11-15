@@ -1,6 +1,8 @@
 package encryption
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 
 	"github.com/hyperledger-labs/cckit/router"
@@ -58,17 +60,28 @@ func Encrypt(key []byte, value interface{}, toBytesConverter serialize.ToBytesCo
 	// TODO: customize  IV
 	bb, err := toBytesConverter.ToBytesFrom(value)
 	if err != nil {
-		return nil, errors.Wrap(err, `convert values to bytes`)
+		return nil, fmt.Errorf(`convert values to bytes: %w`, err)
 	}
-
 	return EncryptBytes(key, bb)
 }
 
 // Decrypt decrypts value with key
 func Decrypt(key, value []byte) ([]byte, error) {
+	return DecryptBytes(key, value)
+}
+
+func EncryptBytes(key, value []byte) ([]byte, error) {
 	bb := make([]byte, len(value))
 	copy(bb, value)
-	return DecryptBytes(key, bb)
+	// IV temporary blank
+	ups, err := aesCBCEncryptWithIV(make([]byte, 16), key, pkcs7Padding(bb))
+	return ups, err
+}
+
+func DecryptBytes(key, value []byte) ([]byte, error) {
+	bb := make([]byte, len(value))
+	copy(bb, value)
+	return AESCBCPKCS7Decrypt(key, bb)
 }
 
 // TransientMapWithKey creates transient map with encrypting/decrypting key

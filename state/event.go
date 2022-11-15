@@ -10,7 +10,7 @@ type (
 	// Event interface for working with events in chaincode
 	Event interface {
 		Set(entry interface{}, value ...interface{}) error
-		UseToBytesConverter(converter serialize.ToBytesConverter) Event
+		UseToBytesConverter(serialize.ToBytesConverter) Event
 		// 	ToBytesConverter todo: check neediness
 		ToBytesConverter() serialize.ToBytesConverter
 		UseNameTransformer(StringTransformer) Event

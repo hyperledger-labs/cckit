@@ -124,7 +124,6 @@ var attributeTypeNames = map[string]string{
 func MarshalPublicKey(publicKey interface{}) []byte {
 	switch pubKey := publicKey.(type) {
 	case *rsa.PublicKey:
-		fmt.Println(`LALALALAL`)
 		return nil
 	case *ecdsa.PublicKey:
 		return elliptic.Marshal(pubKey.Curve, pubKey.X, pubKey.Y)

@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/hyperledger-labs/cckit/serialize"
-	"github.com/hyperledger-labs/cckit/state"
 )
 
 var (
@@ -26,14 +25,11 @@ type (
 
 	EventMappings map[string]*EventMapping
 
-	EventMapped interface {
-		state.NameValue
-	}
-
 	EventMappers interface {
 		Exists(schema interface{}) (exists bool)
-		Map(schema interface{}) (keyValue state.KeyValue, err error)
 		Get(schema interface{}) (eventMapper EventMapper, err error)
+
+		Map(instance interface{}) (*EventInstance, error)
 	}
 
 	EventMapper interface {
@@ -87,15 +83,15 @@ func (emm EventMappings) Exists(entry interface{}) bool {
 	return err == nil
 }
 
-func (emm EventMappings) Map(entry interface{}, toBytesConverter serialize.ToBytesConverter) (instance *EventInstance, err error) {
-	mapping, err := emm.Get(entry)
+func (emm EventMappings) Map(entry interface{}) (*EventInstance, error) {
+	mapper, err := emm.Get(entry)
 	if err != nil {
 		return nil, errors.Wrap(err, `mapping`)
 	}
 
 	switch entry.(type) {
 	case proto.Message:
-		return NewEventInstance(entry, mapping, toBytesConverter)
+		return NewEventInstance(entry, mapper)
 	default:
 		return nil, ErrEntryTypeNotSupported
 	}

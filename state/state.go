@@ -361,6 +361,7 @@ func (s *Impl) Put(entry interface{}, values ...interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	bb, err := s.serializer.ToBytesFrom(value)
 	if err != nil {
 		return err

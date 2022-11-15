@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+
 	"github.com/pkg/errors"
 )
 
@@ -86,13 +87,4 @@ func aesCBCDecrypt(key, src []byte) ([]byte, error) {
 	mode.CryptBlocks(src, src)
 
 	return src, nil
-}
-
-func EncryptBytes(key, value []byte) ([]byte, error) {
-	// IV temporary blank
-	return aesCBCEncryptWithIV(make([]byte, 16), key, pkcs7Padding(value))
-}
-
-func DecryptBytes(key, value []byte) ([]byte, error) {
-	return AESCBCPKCS7Decrypt(key, value)
 }

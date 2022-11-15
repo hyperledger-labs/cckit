@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "github.com/hyperledger-labs/cckit/serialize/testdata;testdata";
+package testdata;
+
+message Payment {
+  string type = 1;
+  string id = 2;
+  int32 amount = 3;
+}

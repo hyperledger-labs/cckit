@@ -7,19 +7,17 @@ import (
 
 type (
 	StateInstance struct {
-		// instance can be instance itself or key for instance
+		// StateInstance  can be instance itself or key for instance
 		// key can be proto or Key ( []string )
-		instance         interface{}
-		stateMapper      StateMapper
-		toBytesConverter serialize.ToBytesConverter
+		instance interface{}
+		mapper   StateMapper
 	}
 )
 
-func NewStateInstance(instance interface{}, stateMapper StateMapper, toBytesConverter serialize.ToBytesConverter) *StateInstance {
+func NewStateInstance(instance interface{}, stateMapper StateMapper) *StateInstance {
 	return &StateInstance{
-		instance:         instance,
-		stateMapper:      stateMapper,
-		toBytesConverter: toBytesConverter,
+		instance: instance,
+		mapper:   stateMapper,
 	}
 }
 
@@ -28,18 +26,18 @@ func (si *StateInstance) Key() (state.Key, error) {
 	case []string:
 		return instance, nil
 	default:
-		return si.stateMapper.PrimaryKey(instance)
+		return si.mapper.PrimaryKey(instance)
 	}
 }
 
-func (si *StateInstance) Keys() ([]state.KeyValue, error) {
-	return si.stateMapper.Keys(si.instance, si.toBytesConverter)
+func (si *StateInstance) ToBytes(toBytesConverter serialize.ToBytesConverter) ([]byte, error) {
+	return toBytesConverter.ToBytesFrom(si.instance)
 }
 
-func (si *StateInstance) ToBytes() ([]byte, error) {
-	return si.toBytesConverter.ToBytesFrom(si.instance)
+func (si *StateInstance) Keys() ([]state.KeyValue, error) {
+	return si.mapper.Keys(si.instance)
 }
 
 func (si *StateInstance) Mapper() StateMapper {
-	return si.stateMapper
+	return si.mapper
 }

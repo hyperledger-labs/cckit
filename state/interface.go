@@ -15,9 +15,10 @@ type State interface {
 	ListablePaginated
 	Deletable
 	Historyable
-	Serializable
-	Transformable
 	Privateable
+
+	WithSerializer
+	WithKeyTransformer
 
 	// Keys returns slice of keys
 	// namespace can be part of key (string or []string) or entity with defined mapping
@@ -116,12 +117,12 @@ type (
 		ExistsPrivate(collection string, entry interface{}) (bool, error)
 	}
 
-	Serializable interface {
+	WithSerializer interface {
 		UseSerializer(serializer serialize.Serializer)
 		Serializer() serialize.Serializer
 	}
 
-	Transformable interface {
+	WithKeyTransformer interface {
 		UseKeyTransformer(KeyTransformer)
 		UseKeyReverseTransformer(KeyTransformer)
 	}

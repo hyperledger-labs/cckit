@@ -1,17 +1,6 @@
 // Package serialize for transforming  between json serialized  []byte and go structs
 package serialize
 
-import (
-	"github.com/pkg/errors"
-)
-
-var (
-	// ErrUnableToConvertNilToStruct - nil cannot be converted to struct
-	ErrUnableToConvertNilToStruct = errors.New(`unable to convert nil to [struct,array,slice,ptr]`)
-	// ErrUnableToConvertValueToStruct - value  cannot be converted to struct
-	ErrUnableToConvertValueToStruct = errors.New(`unable to convert value to struct`)
-)
-
 const TypeInt = 1
 const TypeString = ``
 const TypeBool = true
@@ -21,6 +10,10 @@ type (
 	Serializer interface {
 		ToBytesConverter
 		FromBytesConverter
+	}
+
+	Serializable interface {
+		ToBytes(ToBytesConverter) ([]byte, error)
 	}
 
 	// FromByter  interface supports FromBytes func for converting from slice of bytes to some defined target type

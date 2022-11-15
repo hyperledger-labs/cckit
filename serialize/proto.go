@@ -49,6 +49,9 @@ func JSONProtoMarshal(entry proto.Message) ([]byte, error) {
 
 // BinaryProtoUnmarshal r unmarshalls []byte as proto.Message to pointer, and returns value pointed to
 func BinaryProtoUnmarshal(bb []byte, messageType proto.Message) (message proto.Message, err error) {
+	//if len(bb) == 0 {
+	//	return nil, ErrBytesToSerializeEmpty
+	//}
 	msg := proto.Clone(messageType)
 	err = proto.Unmarshal(bb, msg)
 	if err != nil {
