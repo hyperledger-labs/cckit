@@ -20,6 +20,7 @@ import (
 	"github.com/hyperledger-labs/cckit/state/mapping"
 	testcc "github.com/hyperledger-labs/cckit/testing"
 	expectcc "github.com/hyperledger-labs/cckit/testing/expect"
+	"github.com/hyperledger-labs/cckit/testing/gomega"
 )
 
 func TestEncryption(t *testing.T) {
@@ -87,7 +88,7 @@ var _ = Describe(`Encryption`, func() {
 		encCCInvoker.DecryptInvokeResponse = true
 
 		externalCC = testcc.NewMockStub(`external`,
-			testdata.NewExternaldCC(`paymentsEncWithContext`, `payment-channel`))
+			testdata.NewExternalCC(`paymentsEncWithContext`, `payment-channel`))
 
 		// external cc have access to encrypted payment chaincode
 		externalCC.MockPeerChaincode(
@@ -241,7 +242,7 @@ var _ = Describe(`Encryption`, func() {
 				encryptOnDemandPaymentCC.WithTransient(encryption.TransientMapWithKey(encKey)).InvokeBytes(args...),
 				&schema.Payment{}).(*schema.Payment)
 
-			Expect(paymentFromCC).To(Equal(payment1))
+			Expect(paymentFromCC).To(gomega.StringerEqual(payment1))
 		})
 
 		It("Allow to get encrypted payments by type as unencrypted values", func() {

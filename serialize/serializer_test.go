@@ -1,6 +1,7 @@
 package serialize_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -115,5 +116,27 @@ var _ = Describe(`Generic serializer`, func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(deserializedProto).To(gomega.StringerEqual(ProtoToSerialize))
 		})
+	})
+})
+
+var _ = Describe(`Prefer JSON serializer`, func() {
+
+	serializer := serialize.PreferJSONSerializer
+
+	var serializedProtoAsJSON []byte
+	It(`serialize`, func() {
+		serializedProtoAsJSON, err = serializer.ToBytesFrom(ProtoToSerialize)
+		Expect(err).NotTo(HaveOccurred())
+
+		bb, err := json.Marshal(ProtoToSerialize)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(serializedProtoAsJSON).To(Equal(bb))
+	})
+
+	It(`deserialize`, func() {
+		deserializedProto, err := serializer.FromBytesTo(serializedProtoAsJSON, &testdata.Payment{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(deserializedProto).To(gomega.StringerEqual(ProtoToSerialize))
 	})
 })

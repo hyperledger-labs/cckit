@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
-
 	identitytestdata "github.com/hyperledger-labs/cckit/identity/testdata"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 	"github.com/hyperledger-labs/cckit/state/mapping"
 	"github.com/hyperledger-labs/cckit/state/mapping/testdata"
@@ -93,8 +93,9 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		})
 
 		It("Allow to get entry list", func() {
+			// default serializer should serialize proto to / from binary representation
 			entities := expectcc.PayloadIs(compositeIDCC.Query(`list`),
-				&schema.EntityWithCompositeIdList{}, compositeIDCC.Serializer).(*schema.EntityWithCompositeIdList)
+				&schema.EntityWithCompositeIdList{}, serialize.DefaultSerializer).(*schema.EntityWithCompositeIdList)
 			Expect(len(entities.Items)).To(Equal(3))
 			Expect(entities.Items[0].Name).To(Equal(create1.Name))
 			Expect(entities.Items[0].Value).To(BeNumerically("==", create1.Value))

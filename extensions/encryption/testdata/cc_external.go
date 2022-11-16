@@ -9,9 +9,9 @@ import (
 	"github.com/hyperledger-labs/cckit/router/param"
 )
 
-// NewExternaldCC Tests interaction with external encrypted chaincode (payments)
+// NewExternalCC Tests interaction with external encrypted chaincode (payments)
 // see example/payment
-func NewExternaldCC(encCCName, channelName string) *router.Chaincode {
+func NewExternalCC(encCCName, channelName string) *router.Chaincode {
 	r := router.New(`external`)
 
 	r.

@@ -3,10 +3,17 @@ package serialize
 import (
 	"errors"
 	"fmt"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type (
+	SuppportedType string
+	TargetType     string
+
 	GenericSerializer struct {
+		Supports []SuppportedType
+		Target   TargetType
 	}
 
 	StringSerializer struct {
@@ -17,14 +24,29 @@ type (
 
 	JSONSerializer struct {
 	}
-
-	//ProtoSerializer struct {
-	//}
 )
 
 var (
-	DefaultSerializer = &GenericSerializer{}
-	KeySerializer     = &StringSerializer{}
+	// AnyType defines that serializer supports any supportable variable type
+	AnyType SuppportedType = `any`
+	// StructType defines that serializer supports struct type
+	StructType SuppportedType = `struct`
+	ProtoType  SuppportedType = `proto`
+	ScalarType SuppportedType = `scalar`
+
+	DefaultTarget TargetType = `default`
+	PreferJSON    TargetType = `json`
+
+	DefaultSerializer = &GenericSerializer{
+		Supports: []SuppportedType{AnyType},
+		Target:   DefaultTarget,
+	}
+
+	PreferJSONSerializer = &GenericSerializer{
+		Supports: []SuppportedType{AnyType},
+		Target:   PreferJSON,
+	}
+	KeySerializer = &StringSerializer{}
 
 	ErrOnlyStringSupported = errors.New(`only string supported`)
 )
@@ -33,6 +55,13 @@ func (g *GenericSerializer) ToBytesFrom(entry interface{}) ([]byte, error) {
 	switch entryType := entry.(type) {
 	case Serializable:
 		return entryType.ToBytes(g)
+
+	case proto.Message:
+		if g.Target == PreferJSON {
+			return JSONProtoMarshal(entryType)
+		} else {
+			return BinaryProtoMarshal(entryType)
+		}
 	default:
 		return toBytes(entry)
 	}
@@ -40,7 +69,18 @@ func (g *GenericSerializer) ToBytesFrom(entry interface{}) ([]byte, error) {
 }
 
 func (g *GenericSerializer) FromBytesTo(serialized []byte, target interface{}) (interface{}, error) {
-	return fromBytes(serialized, target)
+	switch targetType := target.(type) {
+
+	case proto.Message:
+		if g.Target == PreferJSON {
+			return JSONProtoUnmarshal(serialized, targetType)
+		} else {
+			return BinaryProtoUnmarshal(serialized, targetType)
+		}
+	default:
+		return fromBytes(serialized, target)
+	}
+
 }
 
 func (g *StringSerializer) ToBytesFrom(entry interface{}) ([]byte, error) {

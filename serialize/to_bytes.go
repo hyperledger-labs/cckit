@@ -21,7 +21,7 @@ func toBytes(value interface{}) ([]byte, error) {
 	case ToByter:
 		return v.ToBytes()
 	case proto.Message:
-		return proto.Marshal(proto.Clone(v))
+		return BinaryProtoMarshal(v)
 	case bool:
 		return []byte(strconv.FormatBool(v)), nil
 	case string:
