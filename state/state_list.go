@@ -1,13 +1,12 @@
 package state
 
 import (
+	"fmt"
 	"reflect"
 
-	"github.com/golang/protobuf/ptypes"
-
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
-	"github.com/pkg/errors"
 
 	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state/schema"
@@ -44,7 +43,7 @@ func (sl *StateList) Fill(
 		}
 		item, err := fromBytesConverter.FromBytesTo(kv.Value, sl.itemTarget)
 		if err != nil {
-			return nil, errors.Wrap(err, `transform list entry`)
+			return nil, fmt.Errorf(`transform list entry: %w`, err)
 		}
 		sl.list = append(sl.list, item)
 	}

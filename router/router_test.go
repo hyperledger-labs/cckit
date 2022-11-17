@@ -3,10 +3,9 @@ package router_test
 import (
 	"testing"
 
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/hyperledger/fabric-chaincode-go/shim"
 
 	"github.com/hyperledger-labs/cckit/router"
 	testcc "github.com/hyperledger-labs/cckit/testing"

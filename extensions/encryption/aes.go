@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-
-	"github.com/pkg/errors"
+	"errors"
 )
 
 // From bccsp/sw/aes

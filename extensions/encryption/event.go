@@ -2,9 +2,9 @@ package encryption
 
 import (
 	"encoding/base64"
+	"fmt"
 
 	"github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/pkg/errors"
 
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/serialize"
@@ -87,7 +87,7 @@ func DecryptEvent(encKey []byte, event *peer.ChaincodeEvent) (decrypted *peer.Ch
 	)
 
 	if encNameBytes, err = base64.StdEncoding.DecodeString(event.EventName); err != nil {
-		return nil, errors.Wrap(err, `event name base64 decoding`)
+		return nil, fmt.Errorf(`event name base64 decode: %w`, err)
 	}
 
 	if decName, err = DecryptBytes(encKey, encNameBytes); err != nil {

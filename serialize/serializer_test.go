@@ -5,13 +5,12 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/serialize/testdata"
 	"github.com/hyperledger-labs/cckit/testing/gomega"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 func TestState(t *testing.T) {
