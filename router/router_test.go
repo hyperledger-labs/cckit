@@ -3,11 +3,9 @@ package router_test
 import (
 	"testing"
 
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/hyperledger/fabric-chaincode-go/shim"
-	"github.com/hyperledger/fabric-protos-go/peer"
 
 	"github.com/hyperledger-labs/cckit/router"
 	testcc "github.com/hyperledger-labs/cckit/testing"
@@ -38,11 +36,11 @@ var _ = Describe(`Router`, func() {
 
 	It(`Allow empty response`, func() {
 
-		Expect(cc.Invoke(`empty`)).To(BeEquivalentTo(peer.Response{
-			Status:  shim.OK,
-			Payload: nil,
-			Message: ``,
-		}))
+		response := cc.Invoke(`empty`)
+		Expect(response.Status).To(Equal(int32(shim.OK)))
+		Expect(response.Payload).To(BeEmpty())
+		Expect(response.Message).To(BeEmpty())
+
 	})
 
 })

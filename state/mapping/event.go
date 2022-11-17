@@ -5,6 +5,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 )
 
@@ -53,6 +54,10 @@ func (e *EventImpl) UseNameTransformer(nt state.StringTransformer) state.Event {
 	return e.event.UseNameTransformer(nt)
 }
 
-func (e *EventImpl) UseSetTransformer(tb state.ToBytesTransformer) state.Event {
-	return e.event.UseSetTransformer(tb)
+func (e *EventImpl) UseToBytesConverter(tb serialize.ToBytesConverter) state.Event {
+	return e.event.UseToBytesConverter(tb)
+}
+
+func (e *EventImpl) ToBytesConverter() serialize.ToBytesConverter {
+	return e.event.ToBytesConverter()
 }

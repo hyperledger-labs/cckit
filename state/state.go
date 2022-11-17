@@ -10,7 +10,7 @@ import (
 
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 
-	"github.com/hyperledger-labs/cckit/convert"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 // HistoryEntry struct containing history information of a single entry
@@ -37,8 +37,10 @@ type Impl struct {
 
 	StateKeyTransformer        KeyTransformer
 	StateKeyReverseTransformer KeyTransformer
-	StateGetTransformer        FromBytesTransformer
-	StatePutTransformer        ToBytesTransformer
+
+	serializer serialize.Serializer
+	//StateGetTransformer        serialize.FromBytesConverter
+	//StatePutTransformer        serialize.ToBytesConverter
 }
 
 // NewState creates wrapper on shim.ChaincodeStubInterface for working with state
@@ -48,8 +50,7 @@ func NewState(stub shim.ChaincodeStubInterface, logger *zap.Logger) *Impl {
 		logger:                     logger,
 		StateKeyTransformer:        KeyAsIs,
 		StateKeyReverseTransformer: KeyAsIs,
-		StateGetTransformer:        ConvertFromBytes,
-		StatePutTransformer:        ConvertToBytes,
+		serializer:                 serialize.DefaultSerializer,
 	}
 
 	// Get data by key from state, direct from stub
@@ -95,8 +96,9 @@ func (s *Impl) Clone() State {
 		GetStateByPartialCompositeKeyWithPagination: s.GetStateByPartialCompositeKeyWithPagination,
 		StateKeyTransformer:                         s.StateKeyTransformer,
 		StateKeyReverseTransformer:                  s.StateKeyReverseTransformer,
-		StateGetTransformer:                         s.StateGetTransformer,
-		StatePutTransformer:                         s.StatePutTransformer,
+		serializer:                                  s.serializer,
+		//StateGetTransformer:                         s.StateGetTransformer,
+		//StatePutTransformer:                         s.StatePutTransformer,
 	}
 }
 
@@ -145,19 +147,17 @@ func (s *Impl) Get(entry interface{}, config ...interface{}) (interface{}, error
 		if len(config) >= 2 {
 			return config[1], nil
 		}
-		return nil, errors.Errorf(`%s: %s`, ErrKeyNotFound, key.Origin)
+		return nil, fmt.Errorf(`get state with key=%s: %w`, key.Origin, ErrKeyNotFound)
 	}
 
-	// config[0] - target type
-	return s.StateGetTransformer(bb, config...)
-}
-
-func (s *Impl) GetInt(key interface{}, defaultValue int) (int, error) {
-	val, err := s.Get(key, convert.TypeInt, defaultValue)
-	if err != nil {
-		return 0, err
+	// return bytes as is
+	var target interface{} = nil
+	if len(config) > 0 {
+		// config[0] - target type
+		target = config[0]
 	}
-	return val.(int), nil
+
+	return s.serializer.FromBytesTo(bb, target)
 }
 
 // GetHistory by key from state, trying to convert to target interface
@@ -181,7 +181,7 @@ func (s *Impl) GetHistory(entry interface{}, target interface{}) (HistoryEntryLi
 		if err != nil {
 			return nil, err
 		}
-		value, err := s.StateGetTransformer(state.Value, target)
+		value, err := s.serializer.FromBytesTo(state.Value, target)
 		if err != nil {
 			return nil, err
 		}
@@ -230,7 +230,7 @@ func (s *Impl) List(namespace interface{}, target ...interface{}) (interface{}, 
 
 	defer func() { _ = iter.Close() }()
 
-	return stateList.Fill(iter, s.StateGetTransformer)
+	return stateList.Fill(iter, s.serializer)
 }
 
 func (s *Impl) createStateQueryIterator(namespace interface{}) (shim.StateQueryIteratorInterface, error) {
@@ -278,7 +278,7 @@ func (s *Impl) ListPaginated(
 	}
 
 	defer func() { _ = iter.Close() }()
-	list, err := stateList.Fill(iter, s.StateGetTransformer)
+	list, err := stateList.Fill(iter, s.serializer)
 
 	return list, md, err
 }
@@ -361,7 +361,8 @@ func (s *Impl) Put(entry interface{}, values ...interface{}) error {
 	if err != nil {
 		return err
 	}
-	bb, err := s.StatePutTransformer(value)
+
+	bb, err := s.serializer.ToBytesFrom(value)
 	if err != nil {
 		return err
 	}
@@ -410,12 +411,12 @@ func (s *Impl) UseKeyReverseTransformer(kt KeyTransformer) {
 	s.StateKeyReverseTransformer = kt
 }
 
-func (s *Impl) UseStateGetTransformer(fb FromBytesTransformer) {
-	s.StateGetTransformer = fb
+func (s *Impl) UseSerializer(serializer serialize.Serializer) {
+	s.serializer = serializer
 }
 
-func (s *Impl) UseStatePutTransformer(tb ToBytesTransformer) {
-	s.StatePutTransformer = tb
+func (s *Impl) Serializer() serialize.Serializer {
+	return s.serializer
 }
 
 // GetPrivate data by key from private state, trying to convert to target interface
@@ -439,8 +440,14 @@ func (s *Impl) GetPrivate(collection string, entry interface{}, config ...interf
 		return nil, errors.Errorf(`%s: %s`, ErrKeyNotFound, key.Origin.String())
 	}
 
-	// config[0] - target type
-	return s.StateGetTransformer(bb, config...)
+	// return bytes as is
+	var target interface{} = nil
+	if len(config) > 0 {
+		// config[0] - target type
+		target = config[0]
+	}
+
+	return s.serializer.FromBytesTo(bb, target)
 }
 
 // ExistsPrivate check entry with key exists in chaincode private state
@@ -483,7 +490,7 @@ func (s *Impl) ListPrivate(collection string, usePrivateDataIterator bool, names
 			return nil, errors.Wrap(err, `create list iterator`)
 		}
 		defer func() { _ = iter.Close() }()
-		return stateList.Fill(iter, s.StateGetTransformer)
+		return stateList.Fill(iter, s.serializer)
 	}
 
 	iter, err := s.stub.GetStateByPartialCompositeKey(key[0], key[1:])
@@ -521,7 +528,7 @@ func (s *Impl) PutPrivate(collection string, entry interface{}, values ...interf
 	if err != nil {
 		return err
 	}
-	bb, err := s.StatePutTransformer(value)
+	bb, err := s.serializer.ToBytesFrom(value)
 	if err != nil {
 		return err
 	}

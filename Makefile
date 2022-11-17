@@ -1,6 +1,6 @@
 GOFLAGS ?= -mod=vendor
 
-PROTO_PACKAGES_GO := state
+PROTO_PACKAGES_GO := serialize state
 PROTO_PACKAGES_GW := gateway
 PROTO_PACKAGES_CC_WITHSERVICE_PREFIX := extensions
 PROTO_PACKAGES_CC := examples

@@ -10,7 +10,11 @@ import (
 	m "github.com/hyperledger-labs/cckit/state/mapping"
 )
 
-// Chaincode WITH schema mapping
+const (
+	PaymentGet = `paymentGet`
+)
+
+// NewEncryptOnDemandPaymentCC Chaincode WITH schema mapping
 // and encrypting data on demand (if encrypting key is provided in transient map)
 func NewEncryptOnDemandPaymentCC() *router.Chaincode {
 	r := router.New(`encrypted-on-demand`).
@@ -50,7 +54,7 @@ func invokePaymentCreateManualEncryptWithMapping(c router.Context) (interface{},
 	returnVal = []byte(paymentId)
 	// return encrypted val if key provided
 	if key, _ := encryption.KeyFromTransient(c); key != nil {
-		returnVal, err = encryption.Encrypt(key, paymentId)
+		returnVal, err = encryption.Encrypt(key, paymentId, c.Serializer())
 	}
 
 	if e, err = encryption.EventWithTransientKeyIfProvided(c); err != nil {
@@ -60,7 +64,13 @@ func invokePaymentCreateManualEncryptWithMapping(c router.Context) (interface{},
 	if err = e.Set(&schema.PaymentEvent{Type: paymentType, Id: paymentId, Amount: int32(paymentAmount)}); err != nil {
 		return nil, err
 	}
-	return returnVal, s.Put(&schema.Payment{Type: paymentType, Id: paymentId, Amount: int32(paymentAmount)})
+	stateData := &schema.Payment{
+		Type:   paymentType,
+		Id:     paymentId,
+		Amount: int32(paymentAmount),
+	}
+
+	return returnVal, s.Put(stateData)
 }
 
 func queryPaymentsWithMapping(c router.Context) (interface{}, error) {

@@ -8,7 +8,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 	g "github.com/onsi/gomega"
 
-	"github.com/hyperledger-labs/cckit/convert"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 // ResponseOk expects peer.Response has shim.OK status and message has okMatcher matcher
@@ -48,9 +48,11 @@ func ResponseError(response peer.Response, errMatcher ...interface{}) peer.Respo
 }
 
 // PayloadIs expects peer.Response payload can be marshalled to target interface{} and returns converted value
-func PayloadIs(response peer.Response, target interface{}) interface{} {
+// todo: fromBytesConverters temporaty optional
+func PayloadIs(response peer.Response, target interface{}, fromBytesConverters ...serialize.FromBytesConverter) interface{} {
 	ResponseOk(response)
-	data, err := convert.FromBytes(response.Payload, target)
+
+	data, err := defaultFromBytesConverter(fromBytesConverters...).FromBytesTo(response.Payload, target)
 	description := ``
 	if err != nil {
 		description = err.Error()

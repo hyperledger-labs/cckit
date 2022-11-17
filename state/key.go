@@ -7,7 +7,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 
-	"github.com/hyperledger-labs/cckit/convert"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 // StringsIdToStr helper for passing []string key
@@ -23,14 +23,14 @@ func StringsIdFromStr(idString string) []string {
 type (
 	Key []string
 
-	// StateKey stores origin and transformed state key
+	// TransformedKey stores origin and transformed state key
 	TransformedKey struct {
 		Origin Key
 		Parts  Key
 		String string
 	}
 
-	//KeyerFunc func(string) ([]string, error)
+	//KeyFunc func(string) ([]string, error)
 	KeyFunc func() (Key, error)
 
 	// KeyerFunc transforms string to key
@@ -41,15 +41,15 @@ type (
 		Key() (Key, error)
 	}
 
-	// StringsKeys interface for entity containing logic of its key creation - backward compatibility
+	// StringsKeyer interface for entity containing logic of its key creation - backward compatibility
 	StringsKeyer interface {
 		Key() ([]string, error)
 	}
 
-	// KeyValue interface combines Keyer as ToByter methods - state entry representation
+	// KeyValue interface combines Keyer as ToByter(Serializer) methods - state entry representation
 	KeyValue interface {
 		Keyer
-		convert.ToByter
+		serialize.Serializable
 	}
 
 	stringKeyer struct {

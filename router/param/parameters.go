@@ -1,11 +1,9 @@
 package param
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/pkg/errors"
-
-	"github.com/hyperledger-labs/cckit/convert"
 	"github.com/hyperledger-labs/cckit/router"
 )
 
@@ -65,7 +63,7 @@ func (p Parameter) ValueFromContext(c router.Context) (arg interface{}, err erro
 			c.Path(), p.Name, argPos, len(args))
 	}
 
-	return convert.FromBytes(args[argPos], p.Type) //first arg is function name
+	return c.Serializer().FromBytesTo(args[argPos], p.Type) //first arg is function name
 }
 
 // Add middleware function

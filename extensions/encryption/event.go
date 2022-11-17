@@ -2,11 +2,12 @@ package encryption
 
 import (
 	"encoding/base64"
+	"fmt"
 
 	"github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/pkg/errors"
 
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 )
 
@@ -16,7 +17,7 @@ func EventWithTransientKey(c router.Context) (state.Event, error) {
 	if err != nil {
 		return nil, err
 	}
-	return Event(c, key)
+	return Event(c, key, c.Serializer())
 }
 
 // EventWithTransientKeyIfProvided returns encrypted event wrapper if key for symmetric
@@ -25,7 +26,7 @@ func EventWithTransientKeyIfProvided(c router.Context) (state.Event, error) {
 	key, err := KeyFromTransient(c)
 	switch err {
 	case nil:
-		return Event(c, key)
+		return Event(c, key, c.Serializer())
 	case ErrKeyNotDefinedInTransientMap:
 		//default event wrapper without encryption
 		return c.Event(), nil
@@ -34,21 +35,21 @@ func EventWithTransientKeyIfProvided(c router.Context) (state.Event, error) {
 }
 
 // Event encrypting the events before setEvent()
-func Event(c router.Context, key []byte) (state.Event, error) {
+func Event(c router.Context, key []byte, serializer serialize.Serializer) (state.Event, error) {
 	//current state
 	s := c.Event()
-	s.UseSetTransformer(ToBytesEncryptor(key))
+	s.UseToBytesConverter(NewSerializer(serializer, key))
 	s.UseNameTransformer(StringEncryptor(key))
 	return s, nil
 }
 
-// EncryptStringWith returns state.StringTransformer encrypting string with provided key
+// StringEncryptor returns state.StringTransformer encrypting string with provided key
 func StringEncryptor(key []byte) state.StringTransformer {
 	return func(s string) (encrypted string, err error) {
 		var (
 			enc []byte
 		)
-		if enc, err = Encrypt(key, []byte(s)); err != nil {
+		if enc, err = EncryptBytes(key, []byte(s)); err != nil {
 			return ``, err
 		}
 
@@ -63,11 +64,11 @@ func EncryptEvent(encKey []byte, event *peer.ChaincodeEvent) (encrypted *peer.Ch
 		encName, encPayload []byte
 	)
 
-	if encName, err = Encrypt(encKey, []byte(event.EventName)); err != nil {
+	if encName, err = EncryptBytes(encKey, []byte(event.EventName)); err != nil {
 		return nil, err
 	}
 
-	if encPayload, err = Encrypt(encKey, event.Payload); err != nil {
+	if encPayload, err = EncryptBytes(encKey, event.Payload); err != nil {
 		return nil, err
 	}
 
@@ -79,21 +80,21 @@ func EncryptEvent(encKey []byte, event *peer.ChaincodeEvent) (encrypted *peer.Ch
 	}, nil
 }
 
-// DecryptEvent
+// DecryptEvent decrypts event name and payload
 func DecryptEvent(encKey []byte, event *peer.ChaincodeEvent) (decrypted *peer.ChaincodeEvent, err error) {
 	var (
 		encNameBytes, decName, decPayload []byte
 	)
 
 	if encNameBytes, err = base64.StdEncoding.DecodeString(event.EventName); err != nil {
-		return nil, errors.Wrap(err, `event name base64 decoding`)
+		return nil, fmt.Errorf(`event name base64 decode: %w`, err)
 	}
 
-	if decName, err = Decrypt(encKey, encNameBytes); err != nil {
+	if decName, err = DecryptBytes(encKey, encNameBytes); err != nil {
 		return nil, err
 	}
 
-	if decPayload, err = Decrypt(encKey, event.Payload); err != nil {
+	if decPayload, err = DecryptBytes(encKey, event.Payload); err != nil {
 		return nil, err
 	}
 

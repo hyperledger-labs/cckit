@@ -6,7 +6,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"go.uber.org/zap"
 
-	"github.com/hyperledger-labs/cckit/response"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/state"
 )
@@ -55,13 +54,13 @@ func argsDecryptor(next router.ContextHandlerFunc, keyShouldBe bool, exceptMetho
 		if err != nil {
 			c.Logger().Debug(`no decrypt key provided`, zap.Error(err))
 			if err == ErrKeyNotDefinedInTransientMap && keyShouldBe {
-				return response.Error(err)
+				return router.ErrorResponse(err)
 			}
 			return next(c)
 		}
 
 		if err = decryptReplaceArgs(key, c); err != nil {
-			return response.Error(err)
+			return router.ErrorResponse(err)
 		}
 
 		return next(c)
@@ -97,7 +96,7 @@ func replaceStateEncrypted(c router.Context) (err error) {
 	return
 }
 
-// EncStateContext replaces default state with encrypted state
+// EncStateContextIfKeyProvided replaces default state with encrypted state
 func EncStateContextIfKeyProvided(next router.HandlerFunc, pos ...int) router.HandlerFunc {
 	return func(c router.Context) (res interface{}, err error) {
 		if _, err = KeyFromTransient(c); err != nil {

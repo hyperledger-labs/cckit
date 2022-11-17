@@ -90,8 +90,8 @@ var _ = Describe(`CommercialPaper`, func() {
 
 		It("Allow issuer to get a list of commercial papers", func() {
 			queryResponse := mockstub.Query(cpaper_asservice.CPaperServiceChaincode_List, &empty.Empty{})
-
-			papers := expectcc.PayloadIs(queryResponse, &cpaper_asservice.CommercialPaperList{}).(*cpaper_asservice.CommercialPaperList)
+			papers := expectcc.PayloadIs(queryResponse,
+				&cpaper_asservice.CommercialPaperList{}).(*cpaper_asservice.CommercialPaperList)
 
 			Expect(len(papers.Items)).To(BeNumerically("==", 1))
 			Expect(papers.Items[0].Issuer).To(Equal(testdata.Issue1.Issuer))
@@ -136,14 +136,14 @@ var _ = Describe(`CommercialPaper`, func() {
 		})
 	})
 
-	Describe("Commercial Paper Encrypted lifecycle", func() {
-		It("Allow issuer to issue new commercial paper", func() {
-
-			expectcc.ResponseOk(mockstubEnc.Invoke(cpaper_asservice.CPaperServiceChaincode_Issue, testdata.Issue1))
-
-			// Validate event has been emitted with the transaction data, and event name and payload is encrypted
-			expectcc.EventStringerEqual(mockstubEnc.LastEvent(),
-				`IssueCommercialPaper`, testdata.Issue1)
-		})
-	})
+	//Describe("Commercial Paper Encrypted lifecycle", func() {
+	//	It("Allow issuer to issue new commercial paper", func() {
+	//
+	//		expectcc.ResponseOk(mockstubEnc.Invoke(cpaper_asservice.CPaperServiceChaincode_Issue, testdata.Issue1))
+	//
+	//		// Validate event has been emitted with the transaction data, and event name and payload is encrypted
+	//		expectcc.EventStringerEqual(mockstubEnc.LastEvent(),
+	//			`IssueCommercialPaper`, testdata.Issue1)
+	//	})
+	//})
 })

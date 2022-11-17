@@ -1,17 +1,19 @@
 package encryption
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 
-	"github.com/hyperledger-labs/cckit/convert"
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 const TransientMapKey = `ENCODE_KEY`
 
 // EncryptArgs convert args to [][]byte and encrypt args with key
-func EncryptArgs(key []byte, args ...interface{}) ([][]byte, error) {
-	argBytes, err := convert.ArgsToBytes(args...)
+func EncryptArgs(key []byte, args []interface{}, toBytesConverter serialize.ToBytesConverter) ([][]byte, error) {
+	argBytes, err := serialize.ArgsToBytes(args, toBytesConverter)
 	if err != nil {
 		return nil, err
 	}
@@ -54,22 +56,32 @@ func DecryptArgs(key []byte, args [][]byte) ([][]byte, error) {
 }
 
 // Encrypt converts value to []byte  and encrypts its with key
-func Encrypt(key []byte, value interface{}) ([]byte, error) {
+func Encrypt(key []byte, value interface{}, toBytesConverter serialize.ToBytesConverter) ([]byte, error) {
 	// TODO: customize  IV
-	bb, err := convert.ToBytes(value)
+	bb, err := toBytesConverter.ToBytesFrom(value)
 	if err != nil {
-		return nil, errors.Wrap(err, `convert values to bytes`)
+		return nil, fmt.Errorf(`convert values to bytes: %w`, err)
 	}
-
 	return EncryptBytes(key, bb)
 }
 
 // Decrypt decrypts value with key
 func Decrypt(key, value []byte) ([]byte, error) {
+	return DecryptBytes(key, value)
+}
 
+func EncryptBytes(key, value []byte) ([]byte, error) {
 	bb := make([]byte, len(value))
 	copy(bb, value)
-	return DecryptBytes(key, bb)
+	// IV temporary blank
+	ups, err := aesCBCEncryptWithIV(make([]byte, 16), key, pkcs7Padding(bb))
+	return ups, err
+}
+
+func DecryptBytes(key, value []byte) ([]byte, error) {
+	bb := make([]byte, len(value))
+	copy(bb, value)
+	return AESCBCPKCS7Decrypt(key, bb)
 }
 
 // TransientMapWithKey creates transient map with encrypting/decrypting key

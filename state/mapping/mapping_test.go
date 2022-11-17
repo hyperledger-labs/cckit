@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
-
 	identitytestdata "github.com/hyperledger-labs/cckit/identity/testdata"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 	"github.com/hyperledger-labs/cckit/state/mapping"
 	"github.com/hyperledger-labs/cckit/state/mapping/testdata"
@@ -79,7 +79,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 			expectcc.ResponseOk(compositeIDCC.Invoke(`create`, create1))
 
 			expectcc.EventStringerEqual(<-events,
-				`CreateEntityWithCompositeId`, create1)
+				`CreateEntityWithCompositeId`, create1, compositeIDCC.Serializer)
 
 			expectcc.ResponseOk(compositeIDCC.Invoke(`create`, create2))
 			expectcc.ResponseOk(compositeIDCC.Invoke(`create`, create3))
@@ -93,8 +93,9 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		})
 
 		It("Allow to get entry list", func() {
+			// default serializer should serialize proto to / from binary representation
 			entities := expectcc.PayloadIs(compositeIDCC.Query(`list`),
-				&schema.EntityWithCompositeIdList{}).(*schema.EntityWithCompositeIdList)
+				&schema.EntityWithCompositeIdList{}, serialize.DefaultSerializer).(*schema.EntityWithCompositeIdList)
 			Expect(len(entities.Items)).To(Equal(3))
 			Expect(entities.Items[0].Name).To(Equal(create1.Name))
 			Expect(entities.Items[0].Value).To(BeNumerically("==", create1.Value))
@@ -135,7 +136,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 					IdSecondPart: create1.IdSecondPart,
 					IdThirdPart:  create1.IdThirdPart,
 				}),
-				&schema.EntityWithCompositeId{}).(*schema.EntityWithCompositeId)
+				&schema.EntityWithCompositeId{}, compositeIDCC.Serializer).(*schema.EntityWithCompositeId)
 
 			// state is updated
 			Expect(entityFromCC.Name).To(Equal(`New name`))
@@ -152,7 +153,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 			expectcc.ResponseOk(compositeIDCC.Invoke(`delete`, toDelete))
 			ee := expectcc.PayloadIs(
 				compositeIDCC.Invoke(`list`),
-				&schema.EntityWithCompositeIdList{}).(*schema.EntityWithCompositeIdList)
+				&schema.EntityWithCompositeIdList{}, compositeIDCC.Serializer).(*schema.EntityWithCompositeIdList)
 
 			Expect(len(ee.Items)).To(Equal(2))
 			expectcc.ResponseError(compositeIDCC.Invoke(`get`, toDelete), state.ErrKeyNotFound)
@@ -170,7 +171,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		It("Allow to add data to chaincode state", func() {
 			expectcc.ResponseOk(complexIDCC.From(Owner).Invoke(`entityInsert`, ent1))
 			keys := expectcc.PayloadIs(complexIDCC.From(Owner).Invoke(
-				`debugStateKeys`, `EntityWithComplexId`), &[]string{}).([]string)
+				`debugStateKeys`, `EntityWithComplexId`), &[]string{}, complexIDCC.Serializer).([]string)
 			Expect(len(keys)).To(Equal(1))
 
 			timeStr := time.Unix(ent1.Id.IdPart3.GetSeconds(), int64(ent1.Id.IdPart3.GetNanos())).Format(`2006-01-02`)
@@ -192,7 +193,8 @@ var _ = Describe(`State mapping in chaincode`, func() {
 
 		It("Allow to list entity", func() {
 			// use Id as key
-			listFromCC := expectcc.PayloadIs(complexIDCC.Query(`entityList`), &state_schema.List{}).(*state_schema.List)
+			listFromCC := expectcc.PayloadIs(complexIDCC.Query(`entityList`),
+				&state_schema.List{}, complexIDCC.Serializer).(*state_schema.List)
 			Expect(listFromCC.Items).To(HaveLen(1))
 
 			Expect(listFromCC.Items[0].Value).To(Equal(testcc.MustProtoMarshal(ent1)))
@@ -206,12 +208,13 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		It("Allow to add data to chaincode state", func() {
 			expectcc.ResponseOk(sliceIDCC.Invoke(`entityInsert`, ent2))
 			keys := expectcc.PayloadIs(sliceIDCC.From(Owner).Invoke(
-				`debugStateKeys`, `EntityWithSliceId`), &[]string{}).([]string)
+				`debugStateKeys`, `EntityWithSliceId`), &[]string{}, sliceIDCC.Serializer).([]string)
 
 			Expect(len(keys)).To(Equal(1))
 
 			// from hyperledger/fabric/core/chaincode/shim/chaincode.go
-			Expect(keys[0]).To(Equal("\x00" + `EntityWithSliceId` + string(rune(0)) + ent2.Id[0] + string(rune(0)) + ent2.Id[1] + string(rune(0))))
+			Expect(keys[0]).To(Equal(
+				"\x00" + `EntityWithSliceId` + string(rune(0)) + ent2.Id[0] + string(rune(0)) + ent2.Id[1] + string(rune(0))))
 		})
 
 		It("Allow to get entity", func() {
@@ -222,7 +225,8 @@ var _ = Describe(`State mapping in chaincode`, func() {
 
 		It("Allow to list entity", func() {
 			// use Id as key
-			listFromCC := expectcc.PayloadIs(sliceIDCC.Query(`entityList`), &state_schema.List{}).(*state_schema.List)
+			listFromCC := expectcc.PayloadIs(
+				sliceIDCC.Query(`entityList`), &state_schema.List{}, sliceIDCC.Serializer).(*state_schema.List)
 			Expect(listFromCC.Items).To(HaveLen(1))
 
 			Expect(listFromCC.Items[0].Value).To(Equal(testcc.MustProtoMarshal(ent2)))
@@ -251,18 +255,18 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		It("Allow finding data by uniq key", func() {
 			fromCCByExtId := expectcc.PayloadIs(
 				indexesCC.Query(`getByExternalId`, create1.ExternalId),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			fromCCById := expectcc.PayloadIs(
 				indexesCC.Query(`get`, create1.Id),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			Expect(fromCCByExtId).To(BeEquivalentTo(fromCCById))
 		})
 
 		It("Allow to get idx state key by uniq key", func() {
 			idxKey, err := testdata.EntityWithIndexesStateMapping.IdxKey(
-				&schema.EntityWithIndexes{}, `ExternalId`, []string{create1.ExternalId})
+				&schema.EntityWithIndexes{}, `ExternalId`, []string{create1.ExternalId}, indexesCC.Serializer)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(idxKey).To(BeEquivalentTo([]string{
@@ -286,15 +290,15 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		It("Allow to find data by multi key", func() {
 			fromCCByExtId1 := expectcc.PayloadIs(
 				indexesCC.Query(`getByOptMultiExternalId`, create2.OptionalExternalIds[0]),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			fromCCByExtId2 := expectcc.PayloadIs(
 				indexesCC.Query(`getByOptMultiExternalId`, create2.OptionalExternalIds[1]),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			fromCCById := expectcc.PayloadIs(
 				indexesCC.Query(`get`, create2.Id),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			Expect(fromCCByExtId1).To(BeEquivalentTo(fromCCById))
 			Expect(fromCCByExtId2).To(BeEquivalentTo(fromCCById))
@@ -312,11 +316,11 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		It("Allow to find data by updated multi key", func() {
 			fromCCByExtId1 := expectcc.PayloadIs(
 				indexesCC.Query(`getByOptMultiExternalId`, create2.OptionalExternalIds[0]),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			fromCCByExtId2 := expectcc.PayloadIs(
 				indexesCC.Query(`getByOptMultiExternalId`, `AND SOME NEW`),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			Expect(fromCCByExtId1.Id).To(Equal(create2.Id))
 			Expect(fromCCByExtId2.Id).To(Equal(create2.Id))
@@ -334,7 +338,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		It("Allow to find data by updated uniq key", func() {
 			fromCCByExtId := expectcc.PayloadIs(
 				indexesCC.Query(`getByExternalId`, `some_new_external_id`),
-				&schema.EntityWithIndexes{}).(*schema.EntityWithIndexes)
+				&schema.EntityWithIndexes{}, indexesCC.Serializer).(*schema.EntityWithIndexes)
 
 			Expect(fromCCByExtId.Id).To(Equal(create2.Id))
 			Expect(fromCCByExtId.ExternalId).To(Equal(`some_new_external_id`))
@@ -351,7 +355,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 
 			ee := expectcc.PayloadIs(
 				indexesCC.Invoke(`list`),
-				&schema.EntityWithIndexesList{}).(*schema.EntityWithIndexesList)
+				&schema.EntityWithIndexesList{}, indexesCC.Serializer).(*schema.EntityWithIndexesList)
 
 			Expect(len(ee.Items)).To(Equal(1))
 			expectcc.ResponseError(indexesCC.Invoke(`get`, create2.Id), state.ErrKeyNotFound)
@@ -370,7 +374,8 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		}
 
 		It("Disallow to get config before set", func() {
-			expectcc.ResponseError(configCC.Invoke(`configGet`), `state entry not found: Config`)
+			expectcc.ResponseError(configCC.Invoke(`configGet`),
+				`get state with key=Config: state entry not found`)
 		})
 
 		It("Allow to set config", func() {
@@ -378,7 +383,8 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		})
 
 		It("Allow to get config", func() {
-			confFromCC := expectcc.PayloadIs(configCC.Invoke(`configGet`), &schema.Config{}).(*schema.Config)
+			confFromCC := expectcc.PayloadIs(
+				configCC.Invoke(`configGet`), &schema.Config{}, configCC.Serializer).(*schema.Config)
 			Expect(confFromCC.Field1).To(Equal(configSample.Field1))
 			Expect(confFromCC.Field2).To(Equal(configSample.Field2))
 		})

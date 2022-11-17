@@ -8,20 +8,18 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
-)
-
-var (
-	DefaultSerializer = &state.ProtoSerializer{}
 )
 
 type (
 	// StateMappers interface for mappers collection
 	StateMappers interface {
-		Exists(schema interface{}) (exists bool)
-		Map(schema interface{}) (keyValue state.KeyValue, err error)
-		Get(schema interface{}) (stateMapper StateMapper, err error)
-		PrimaryKey(schema interface{}) (key state.Key, err error)
+		Exists(schema interface{}) bool
+		Get(schema interface{}) (StateMapper, error)
+
+		Map(instance interface{}) (*StateInstance, error)
+		PrimaryKey(instance interface{}) (state.Key, error)
 	}
 
 	// StateMapper interface for dealing with mapped state
@@ -30,9 +28,9 @@ type (
 		List() interface{}
 		Namespace() state.Key
 		// PrimaryKey returns primary key for entry
-		PrimaryKey(instance interface{}) (key state.Key, err error)
+		PrimaryKey(instance interface{}) (state.Key, error)
 		// Keys returns additional keys for
-		Keys(instance interface{}) (key []state.KeyValue, err error)
+		Keys(instance interface{}) ([]state.KeyValue, error)
 		//KeyerFor returns target entity if mapper is key mapper
 		KeyerFor() (schema interface{})
 		Indexes() []*StateIndex
@@ -50,23 +48,6 @@ type (
 		primaryKeyer   InstanceKeyer // primary key always one
 		list           interface{}   // list schema
 		indexes        []*StateIndex // additional keys
-	}
-
-	// StateIndex additional index of entity instance
-	StateIndex struct {
-		Name     string
-		Uniq     bool
-		Required bool
-		Keyer    InstanceMultiKeyer // index can have multiple keys
-	}
-
-	// StateIndexDef additional index definition
-	StateIndexDef struct {
-		Name     string
-		Fields   []string
-		Required bool
-		Multi    bool
-		Keyer    InstanceMultiKeyer
 	}
 
 	StateMappings map[string]*StateMapping
@@ -141,15 +122,15 @@ func (smm StateMappings) Exists(entry interface{}) bool {
 	return err == nil
 }
 
-func (smm StateMappings) PrimaryKey(entry interface{}) (pkey state.Key, err error) {
-	var m StateMapper
-	if m, err = smm.Get(entry); err != nil {
+func (smm StateMappings) PrimaryKey(entry interface{}) (state.Key, error) {
+	mapper, err := smm.Get(entry)
+	if err != nil {
 		return nil, err
 	}
-	return m.PrimaryKey(entry)
+	return mapper.PrimaryKey(entry)
 }
 
-func (smm StateMappings) Map(entry interface{}) (instance *StateInstance, err error) {
+func (smm StateMappings) Map(entry interface{}) (*StateInstance, error) {
 	mapper, err := smm.Get(entry)
 	if err != nil {
 		return nil, errors.Wrap(err, `mapping`)
@@ -157,24 +138,26 @@ func (smm StateMappings) Map(entry interface{}) (instance *StateInstance, err er
 
 	switch entry.(type) {
 	case proto.Message, []string:
-		return NewStateInstance(entry, mapper, DefaultSerializer), nil
+		return NewStateInstance(entry, mapper), nil
 	default:
 		return nil, ErrEntryTypeNotSupported
 	}
 }
 
-func (smm StateMappings) Resolve(objectType string, value []byte) (entry interface{}, err error) {
+func (smm StateMappings) Resolve(objectType string,
+	value []byte, fromBytesConverter serialize.FromBytesConverter) (entry interface{}, err error) {
 	mapper, err := smm.GetByNamespace(state.Key{objectType})
 	if err != nil {
 		return nil, err
 	}
 
-	return DefaultSerializer.FromBytes(value, mapper.Schema())
+	return fromBytesConverter.FromBytesTo(value, mapper.Schema())
 }
 
 //
-func (smm *StateMappings) IdxKey(entity interface{}, idx string, idxVal state.Key) (state.Key, error) {
-	keyMapped := NewKeyRefIDInstance(entity, idx, idxVal)
+func (smm *StateMappings) IdxKey(entity interface{},
+	idx string, idxVal state.Key, toBytesConverter serialize.ToBytesConverter) (state.Key, error) {
+	keyMapped := NewKeyRefIDInstance(entity, idx, idxVal, toBytesConverter)
 	return keyMapped.Key()
 }
 

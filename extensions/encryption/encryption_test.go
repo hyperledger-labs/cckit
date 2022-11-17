@@ -15,10 +15,12 @@ import (
 	"github.com/hyperledger-labs/cckit/extensions/encryption/testdata"
 	enctest "github.com/hyperledger-labs/cckit/extensions/encryption/testing"
 	identitytestdata "github.com/hyperledger-labs/cckit/identity/testdata"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/state"
 	"github.com/hyperledger-labs/cckit/state/mapping"
 	testcc "github.com/hyperledger-labs/cckit/testing"
 	expectcc "github.com/hyperledger-labs/cckit/testing/expect"
+	"github.com/hyperledger-labs/cckit/testing/gomega"
 )
 
 func TestEncryption(t *testing.T) {
@@ -35,6 +37,7 @@ var (
 	encryptPaymentCC                    *testcc.MockStub
 	encryptPaymentCCWithEncStateContext *testcc.MockStub
 	externalCC                          *testcc.MockStub
+	serializer                          = serialize.DefaultSerializer
 
 	encCCInvoker *enctest.MockStub
 
@@ -51,15 +54,15 @@ var (
 	pID3           = `id-3`
 	pAmount3 int32 = 333
 
-	encryptedPType, encryptedPId1 []byte
-	payment1                      *schema.Payment
-	encPayment1                   []byte
-	paymentMapper                 mapping.StateMapper
-	encPaymentNamespace           []byte
-	err                           error
+	encryptedPType, encryptedPId1   []byte
+	payment1                        *schema.Payment
+	payment1Serialized, encPayment1 []byte
+	paymentMapper                   mapping.StateMapper
+	encPaymentNamespace             []byte
+	err                             error
 )
 
-var _ = Describe(`Router`, func() {
+var _ = Describe(`Encryption`, func() {
 
 	BeforeSuite(func() {
 		// Create encode key. In real case it can be calculated via ECDH
@@ -85,17 +88,17 @@ var _ = Describe(`Router`, func() {
 		encCCInvoker.DecryptInvokeResponse = true
 
 		externalCC = testcc.NewMockStub(`external`,
-			testdata.NewExternaldCC(`paymentsEncWithContext`, `payment-channel`))
+			testdata.NewExternalCC(`paymentsEncWithContext`, `payment-channel`))
 
 		// external cc have access to encrypted payment chaincode
 		externalCC.MockPeerChaincode(
 			`paymentsEncWithContext/payment-channel`,
 			encryptPaymentCCWithEncStateContext)
 
-		encryptedPType, err = encryption.Encrypt(encKey, pType)
+		encryptedPType, err = encryption.Encrypt(encKey, pType, encryptPaymentCC.Serializer)
 		Expect(err).To(BeNil())
 
-		encryptedPId1, err = encryption.Encrypt(encKey, pID1)
+		encryptedPId1, err = encryption.Encrypt(encKey, pID1, encryptPaymentCC.Serializer)
 		Expect(err).To(BeNil())
 
 		payment1 = &schema.Payment{
@@ -104,17 +107,79 @@ var _ = Describe(`Router`, func() {
 			Amount: pAmount1,
 		}
 
-		encPayment1, err = encryption.Encrypt(encKey, payment1)
+		payment1Serialized, err = serializer.ToBytesFrom(payment1)
+		Expect(err).To(BeNil())
+
+		encPayment1, err = encryption.Encrypt(encKey, payment1, encryptPaymentCC.Serializer)
 		Expect(err).To(BeNil())
 
 		paymentMapper, _ = payment.StateMappings.Get(&schema.Payment{})
 		Expect(err).To(BeNil())
 
 		// we know that Payment namespace contain only one part
-		encPaymentNamespace, err = encryption.Encrypt(encKey, paymentMapper.Namespace()[0])
+		encPaymentNamespace, err = encryption.Encrypt(encKey, paymentMapper.Namespace()[0], encryptPaymentCC.Serializer)
 		Expect(err).To(BeNil())
 	})
 
+	Describe("Encrypting methods", func() {
+
+		var encrypted1, encrypted2 []byte
+		It("Allow to encrypt bytes", func() {
+			encrypted1, err = encryption.EncryptBytes(encKey, []byte(pID1))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(encrypted1)).To(BeNumerically(">", len(pID1)))
+
+			// once more
+			encrypted2, err = encryption.EncryptBytes(encKey, []byte(pID1))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(encrypted2).To(Equal(encrypted1))
+		})
+
+		It("Allow to decrypt bytes", func() {
+			decrypted, err := encryption.DecryptBytes(encKey, encrypted1)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(decrypted).To(Equal([]byte(pID1)))
+		})
+
+		It("Allow to encrypt bytes with serializer", func() {
+			encrypted2, err = encryption.Encrypt(encKey, []byte(pID1), serializer)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(encrypted2)).To(BeNumerically(">", len(pID1)))
+			Expect(encrypted2).To(Equal(encrypted1))
+		})
+
+		It("Allow to decrypt bytes with serializer", func() {
+			decrypted, err := encryption.Decrypt(encKey, encrypted2)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(decrypted).To(Equal([]byte(pID1)))
+		})
+		It("Allow to encrypt struct", func() {
+			encrypted1, err = encryption.EncryptBytes(encKey, []byte(pID1))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(encrypted1)).To(BeNumerically(">", len(pID1)))
+		})
+
+		It("Allow to decrypt bytes", func() {
+			decrypted, err := encryption.DecryptBytes(encKey, encrypted1)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(decrypted).To(Equal([]byte(pID1)))
+		})
+
+		It(`Allow to encrypt args`, func() {
+
+			args, err := encryption.EncryptArgs(encKey,
+				[]interface{}{payment.PaymentGet, pType, pID1}, serializer)
+			Expect(err).To(BeNil())
+			Expect(len(args)).To(Equal(3))
+
+			methodNameEncrypted, err := encryption.Encrypt(encKey, payment.PaymentGet, serializer)
+			Expect(err).To(BeNil())
+			Expect(args[0]).To(Equal(methodNameEncrypted))
+
+			Expect(args[1]).To(Equal(encryptedPType))
+		})
+
+	})
 	Describe("Encrypting in demand with state mapping", func() {
 
 		It("Allow to init encrypt-on-demand payment chaincode without key in transient map", func() {
@@ -129,7 +194,8 @@ var _ = Describe(`Router`, func() {
 
 		It("Allow to create encrypted payment", func() {
 			// encrypt all arguments
-			args, err := encryption.EncryptArgs(encKey, `paymentCreate`, pType, pID1, pAmount1)
+			args, err := encryption.EncryptArgs(encKey,
+				[]interface{}{`paymentCreate`, pType, pID1, pAmount1}, encryptOnDemandPaymentCC.Serializer)
 			Expect(err).To(BeNil())
 			Expect(len(args)).To(Equal(4))
 
@@ -137,7 +203,6 @@ var _ = Describe(`Router`, func() {
 			Expect(args[1]).To(Equal(encryptedPType))
 			// second argument is encoded payment id
 			Expect(args[2]).To(Equal(encryptedPId1))
-
 			// invoke chaincode with encoded args and encKey via transientMap, receives encoded payment id
 			ccPId := expectcc.PayloadBytes(
 				encryptOnDemandPaymentCC.WithTransient(encryption.TransientMapWithKey(encKey)).
@@ -157,25 +222,27 @@ var _ = Describe(`Router`, func() {
 		})
 
 		It("Allow to get encrypted payment by type and id", func() {
-			// encrypt all arguments
-			args, err := encryption.EncryptArgs(encKey, `paymentGet`, pType, pID1)
+			//encrypt all arguments
+			args, err := encryption.EncryptArgs(encKey,
+				[]interface{}{`paymentGet`, pType, pID1}, encryptPaymentCC.Serializer)
 			Expect(err).To(BeNil())
-			Expect(len(args)).To(Equal(3))
 
 			// Check that value is encrypted in chaincode state - use debugStateGet func
 			// without providing key in transient map - so we need to provide encrypted key
 			// and cause we dont't require key - state also returns unencrypted
-			expectcc.PayloadBytes(encryptOnDemandPaymentCC.Invoke(`debugStateGet`, []string{
+			stateGetResult := encryptOnDemandPaymentCC.Invoke(`debugStateGet`, []string{
 				base64.StdEncoding.EncodeToString(encPaymentNamespace),
 				base64.StdEncoding.EncodeToString(encryptedPType),
-				base64.StdEncoding.EncodeToString(encryptedPId1)}), encPayment1)
+				base64.StdEncoding.EncodeToString(encryptedPId1)})
+
+			expectcc.PayloadBytes(stateGetResult, encPayment1)
 
 			//returns unencrypted
 			paymentFromCC := expectcc.PayloadIs(
 				encryptOnDemandPaymentCC.WithTransient(encryption.TransientMapWithKey(encKey)).InvokeBytes(args...),
 				&schema.Payment{}).(*schema.Payment)
 
-			Expect(paymentFromCC).To(Equal(payment1))
+			Expect(paymentFromCC).To(gomega.StringerEqual(payment1))
 		})
 
 		It("Allow to get encrypted payments by type as unencrypted values", func() {
@@ -298,7 +365,7 @@ var _ = Describe(`Router`, func() {
 		It("Disallow to get non existent payment by type and id providing encrypting key in transient map", func() {
 			// key in error is not encrypted
 			expectcc.ResponseError(encCCInvoker.From(Owner).Query(`paymentGet`, pType, pID1+`NoExists`),
-				state.ErrKeyNotFound.Error()+`: Payment | SALE | id-1NoExists`)
+				`Payment | SALE | id-1NoExists: `+state.ErrKeyNotFound.Error())
 		})
 
 		It("Allow to get payment by type and id", func() {
@@ -311,7 +378,6 @@ var _ = Describe(`Router`, func() {
 		})
 
 		It("Allow to get payment via external chaincode", func() {
-
 			paymentFromExtCC := expectcc.PayloadIs(externalCC.WithTransient(encryption.
 				TransientMapWithKey(encKey)).Query(`checkPayment`, pType, pID1), &schema.Payment{}).(*schema.Payment)
 			Expect(paymentFromExtCC.Id).To(Equal(pID1))

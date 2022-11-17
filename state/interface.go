@@ -3,6 +3,8 @@ package state
 import (
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"go.uber.org/zap"
+
+	"github.com/hyperledger-labs/cckit/serialize"
 )
 
 // State interface for chain code CRUD operations
@@ -13,12 +15,10 @@ type State interface {
 	ListablePaginated
 	Deletable
 	Historyable
-	Transformable
 	Privateable
 
-	// Deprecated: GetInt returns value from state, converted to int
-	// entry can be Key (string or []string) or type implementing Keyer interface
-	GetInt(entry interface{}, defaultValue int) (int, error)
+	WithSerializer
+	WithKeyTransformer
 
 	// Keys returns slice of keys
 	// namespace can be part of key (string or []string) or entity with defined mapping
@@ -117,10 +117,13 @@ type (
 		ExistsPrivate(collection string, entry interface{}) (bool, error)
 	}
 
-	Transformable interface {
+	WithSerializer interface {
+		UseSerializer(serializer serialize.Serializer)
+		Serializer() serialize.Serializer
+	}
+
+	WithKeyTransformer interface {
 		UseKeyTransformer(KeyTransformer)
 		UseKeyReverseTransformer(KeyTransformer)
-		UseStateGetTransformer(FromBytesTransformer)
-		UseStatePutTransformer(ToBytesTransformer)
 	}
 )

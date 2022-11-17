@@ -8,8 +8,6 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"go.uber.org/zap"
-
-	"github.com/hyperledger-labs/cckit/response"
 )
 
 type (
@@ -95,7 +93,7 @@ func (g *Group) HandleInit(stub shim.ChaincodeStubInterface) peer.Response {
 func (g *Group) Handle(stub shim.ChaincodeStubInterface) peer.Response {
 	args := stub.GetArgs()
 	if len(args) == 0 {
-		return response.Error(ErrEmptyArgs)
+		return ErrorResponse(ErrEmptyArgs)
 	}
 
 	h := g.buildHandler()
@@ -137,11 +135,8 @@ func (g *Group) handleContext(c Context) peer.Response {
 
 			return h(c)
 		}
-		resp := response.Create(h(c))
-		if resp.Status != shim.OK {
-			g.logger.Error(`router handler error`, zap.String(`path`, c.Path()), zap.String(`message`, resp.Message))
-		}
-		return resp
+
+		return c.Response().Create(h(c))
 	}
 
 	err := fmt.Errorf(`%s: %s`, ErrMethodNotFound, c.Path())
