@@ -1,9 +1,8 @@
 package param
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/pkg/errors"
 
 	"github.com/hyperledger-labs/cckit/router"
 )
