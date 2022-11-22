@@ -18,6 +18,8 @@ type (
 		ChaincodeInstance ChaincodeInstanceServiceServer
 		Serializer        serialize.Serializer
 	}
+
+	NewInvokerFunc = func(ChaincodeInstanceInvoker) ChaincodeInstanceInvoker // custom invoker
 )
 
 // NewChaincodeInstanceServiceInvoker

@@ -16,10 +16,11 @@ import (
 
 type (
 	Opts struct {
-		Context []ContextOpt
-		Input   []InputOpt
-		Output  []OutputOpt
-		Event   []EventOpt
+		Context        []ContextOpt
+		InvokerContext []ContextOpt // save context for chaincode invoker
+		Input          []InputOpt
+		Output         []OutputOpt
+		Event          []EventOpt
 	}
 
 	InstanceOpts struct {
@@ -34,6 +35,14 @@ type (
 	OutputOpt  func(action InvocationType, response *peer.Response) error
 	EventOpt   func(event *ChaincodeEvent) error
 )
+
+func WithInvoker(invoker NewInvokerFunc) Opt {
+	return func(opts *Opts) {
+		opts.InvokerContext = append(opts.InvokerContext, func(ctx context.Context) context.Context {
+			return ContextWithInvoker(ctx, invoker)
+		})
+	}
+}
 
 func WithDefaultSigner(defaultSigner msp.SigningIdentity) Opt {
 	return func(opts *Opts) {

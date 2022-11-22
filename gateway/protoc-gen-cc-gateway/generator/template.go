@@ -118,11 +118,13 @@ type {{ $svc.GetName }}Gateway struct {
 	ChaincodeInstance cckit_gateway.ChaincodeInstance
 }
 
-
-func (c *{{ $svc.GetName }}Gateway) Invoker() cckit_gateway.ChaincodeInstanceInvoker {
+// use default or custome invoker
+func (c *{{ $svc.GetName }}Gateway) Invoker(fn cckit_gateway.NewInvokerFunc) cckit_gateway.ChaincodeInstanceInvoker {
+   if fn != nil {
+      return fn(cckit_gateway.NewChaincodeInstanceServiceInvoker(c.ChaincodeInstance))
+   }
    return cckit_gateway.NewChaincodeInstanceServiceInvoker(c.ChaincodeInstance)
 }
-
 
 // ServiceDef returns service definition
 func (c *{{ $svc.GetName }}Gateway) ServiceDef() cckit_gateway.ServiceDef {
@@ -148,7 +150,14 @@ func (c *{{ $svc.GetName }}Gateway) ServiceDef() cckit_gateway.ServiceDef {
 	   } 
      }
 
-    if res, err := c.Invoker().{{ $method }}(ctx, {{ $svc.GetName }}Chaincode_{{ $m.GetName }} , []interface{}{in}, &{{ $m.ResponseType.GoType $m.Service.File.GoPkg.Path | goTypeName }}{}); err != nil {
+    // get invoker context
+    cis := c.ChaincodeInstance.(*cckit_gateway.ChaincodeInstanceService)
+    for _, c := range cis.Opts.InvokerContext {
+      ctx = c(ctx)
+    }
+     
+    newInvokerFunc, _ := cckit_gateway.InvokerFromContext(ctx) // get custom invoker
+    if res, err := c.Invoker(newInvokerFunc).{{ $method }}(ctx, {{ $svc.GetName }}Chaincode_{{ $m.GetName }} , []interface{}{in}, &{{ $m.ResponseType.GoType $m.Service.File.GoPkg.Path | goTypeName }}{}); err != nil {
 		return nil, err
 	} else {
 		return res.(*{{ $m.ResponseType.GoType $m.Service.File.GoPkg.Path | goTypeName }}), nil
