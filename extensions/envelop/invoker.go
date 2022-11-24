@@ -58,7 +58,7 @@ func ParseEnvelop(base64Env []byte) ([]byte, error) {
 	dst := make([]byte, base64.StdEncoding.DecodedLen(len(base64Env)))
 	n, err := base64.StdEncoding.Decode(dst, base64Env)
 	if err != nil {
-		return nil, ErrDecodeEnvelopFailed
+		return nil, fmt.Errorf("parse envelop: %w", err)
 	}
 	return dst[:n], nil
 }

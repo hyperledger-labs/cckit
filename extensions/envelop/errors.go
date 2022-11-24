@@ -7,7 +7,5 @@ var (
 
 	ErrSignatureCheckFailed = errors.New(`check signature failed`)
 
-	ErrDecodeEnvelopFailed = errors.New(`decod envelope failed`)
-
 	ErrDeadlineExpired = errors.New(`deadline expired`)
 )

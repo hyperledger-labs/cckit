@@ -12,6 +12,7 @@ import (
 	"github.com/hyperledger-labs/cckit/extensions/envelop"
 	"github.com/hyperledger-labs/cckit/extensions/envelop/testdata"
 	identitytestdata "github.com/hyperledger-labs/cckit/identity/testdata"
+	"github.com/hyperledger-labs/cckit/serialize"
 
 	testcc "github.com/hyperledger-labs/cckit/testing"
 )
@@ -93,7 +94,7 @@ var _ = Describe(`Envelop`, func() {
 				HashToSign:      hashToSign[:],
 				HashFunc:        "SHA3-256",
 				Deadline:        testcc.MustProtoTimestamp(time.Now().AddDate(0, 2, 0)),
-				DomainSeparator: []byte(""),
+				DomainSeparator: []byte("DomainSeparator"),
 			}
 			jsonEnv, _ := json.Marshal(env)
 			base64Env := base64.StdEncoding.EncodeToString(jsonEnv)
@@ -107,8 +108,8 @@ var _ = Describe(`Envelop`, func() {
 	Describe("Signature verification", func() {
 
 		var (
-			base64Env         string
-			jsonEnv, bytesEnv []byte
+			serializedEnv []byte
+			serializer    = serialize.PreferJSONSerializer
 		)
 
 		BeforeEach(func() {
@@ -123,11 +124,10 @@ var _ = Describe(`Envelop`, func() {
 				HashToSign:      hashToSign[:],
 				HashFunc:        "SHA3-256",
 				Deadline:        testcc.MustProtoTimestamp(time.Now().AddDate(0, 2, 0)),
-				DomainSeparator: []byte(""),
+				DomainSeparator: []byte("DomainSeparator"),
 			}
-			jsonEnv, _ = json.Marshal(env)
-			base64Env = base64.StdEncoding.EncodeToString(jsonEnv)
-			bytesEnv, _ = envelop.ParseEnvelop([]byte(base64Env))
+			serializedEnv, _ = serializer.ToBytesFrom(env)
+			// jsonEnv, _ = json.Marshal(env)
 		})
 
 		It("Allow to verify valid signature", func() {
@@ -135,7 +135,7 @@ var _ = Describe(`Envelop`, func() {
 				`envelop chaincode mock`,
 				testdata.NewEnvelopCC(chaincodeName, channelName))
 
-			resp := envelopCC.Invoke("invokeWithEnvelop", payload, bytesEnv)
+			resp := envelopCC.Invoke("invokeWithEnvelop", payload, serializedEnv)
 			Expect(resp.Status).To(BeNumerically("==", 200))
 		})
 
@@ -145,7 +145,7 @@ var _ = Describe(`Envelop`, func() {
 				testdata.NewEnvelopCC(chaincodeName, channelName))
 
 			invalidPayload := []byte("invalid payload")
-			resp := envelopCC.Invoke("invokeWithEnvelop", invalidPayload, bytesEnv)
+			resp := envelopCC.Invoke("invokeWithEnvelop", invalidPayload, serializedEnv)
 			Expect(resp.Status).To(BeNumerically("==", 500))
 		})
 

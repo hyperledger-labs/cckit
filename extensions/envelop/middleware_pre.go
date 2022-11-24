@@ -1,7 +1,6 @@
 package envelop
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/hyperledger-labs/cckit/router"
@@ -18,16 +17,12 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 				c.Logger().Sugar().Error(ErrSignatureNotFound)
 				return router.ErrorResponse(ErrSignatureNotFound)
 			} else {
-				// todo: add serializer
-				// serializer := serialize.PreferJSONSerializer
-				// data, err := serializer.FromBytesTo(args[2], &Envelop{})
-				// env := data.(*Envelop)
-				env := &Envelop{}
-				err := json.Unmarshal(args[2], env)
+				data, err := c.Serializer().FromBytesTo(args[2], &Envelop{})
 				if err != nil {
 					c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 					return router.ErrorResponse(err)
 				}
+				env := data.(Envelop)
 				if env.Deadline.AsTime().Unix() < time.Now().Unix() {
 					c.Logger().Sugar().Error(ErrDeadlineExpired)
 					return router.ErrorResponse(ErrDeadlineExpired)
