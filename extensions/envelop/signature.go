@@ -14,7 +14,7 @@ var (
 	ErrCheckSignatureFailed = errors.New(`check signature failed`)
 )
 
-func CreatePrivKey() (ed25519.PublicKey, ed25519.PrivateKey, error) {
+func CreateKeys() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, nil, err

@@ -36,7 +36,7 @@ type (
 	EventOpt   func(event *ChaincodeEvent) error
 )
 
-func WithInvoker(invoker NewInvokerFunc) Opt {
+func WithInvoker(invoker CustomChaincodeInstanceInvoker) Opt {
 	return func(opts *Opts) {
 		opts.InvokerContext = append(opts.InvokerContext, func(ctx context.Context) context.Context {
 			return ContextWithInvoker(ctx, invoker)

@@ -20,13 +20,13 @@ const (
 )
 
 // save custom invoker in context
-func ContextWithInvoker(ctx context.Context, invoker NewInvokerFunc) context.Context {
+func ContextWithInvoker(ctx context.Context, invoker CustomChaincodeInstanceInvoker) context.Context {
 	return context.WithValue(ctx, CtxInvokerKey, invoker)
 }
 
 // get custom invoker from context
-func InvokerFromContext(ctx context.Context) (NewInvokerFunc, error) {
-	if invoker, ok := ctx.Value(CtxInvokerKey).(NewInvokerFunc); !ok {
+func InvokerFromContext(ctx context.Context) (CustomChaincodeInstanceInvoker, error) {
+	if invoker, ok := ctx.Value(CtxInvokerKey).(CustomChaincodeInstanceInvoker); !ok {
 		return nil, ErrNewInvokerNotDefinedInContext
 	} else {
 		return invoker, nil

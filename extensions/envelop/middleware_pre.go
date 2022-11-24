@@ -1,9 +1,8 @@
 package envelop
 
 import (
-	"encoding/base64"
-	"errors"
-	"fmt"
+	"encoding/json"
+	"time"
 
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -16,28 +15,26 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 		args := c.GetArgs() // todo: check method type == invoke
 		if len(args) > 1 {
 			if len(args) == 2 {
-				err := errors.New("signature not found")
-				c.Logger().Sugar().Error(err)
-				return router.ErrorResponse(err)
+				c.Logger().Sugar().Error(ErrSignatureNotFound)
+				return router.ErrorResponse(ErrSignatureNotFound)
 			} else {
-				dst := make([]byte, base64.StdEncoding.DecodedLen(len(args[2])))
-				n, err := base64.StdEncoding.Decode(dst, args[2])
-				if err != nil {
-					c.Logger().Error(`decod envelope failed:`, zap.Error(err))
-					return router.ErrorResponse(err)
-				}
-				dst = dst[:n]
-				fmt.Println("dst", string(dst))
-				data, err := c.Serializer().FromBytesTo(dst, &Envelop{})
-				fmt.Println("dst", string(dst))
+				// todo: add serializer
+				// serializer := serialize.PreferJSONSerializer
+				// data, err := serializer.FromBytesTo(args[2], &Envelop{})
+				// env := data.(*Envelop)
+				env := &Envelop{}
+				err := json.Unmarshal(args[2], env)
 				if err != nil {
 					c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 					return router.ErrorResponse(err)
 				}
-				envelope := data.(*Envelop)
-				if err := CheckSig(args[1], envelope.Nonce, envelope.PublicKey, envelope.Signature); err != nil {
-					c.Logger().Error(`check signature failed:`, zap.Error(err))
-					return router.ErrorResponse(err)
+				if env.Deadline.AsTime().Unix() < time.Now().Unix() {
+					c.Logger().Sugar().Error(ErrDeadlineExpired)
+					return router.ErrorResponse(ErrDeadlineExpired)
+				}
+				if err := CheckSig(args[1], env.Nonce, env.PublicKey, env.Signature); err != nil {
+					c.Logger().Sugar().Error(ErrCheckSignatureFailed)
+					return router.ErrorResponse(ErrCheckSignatureFailed)
 				}
 			}
 		}
