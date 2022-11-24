@@ -42,7 +42,7 @@ func (c *ChaincodeInstanceServiceEnvelopInvoker) Invoke(
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
 		if v, ok := md["x-envelop"]; ok {
-			env, err := ParseEnvelop([]byte(v[0]))
+			env, err := DecodeEnvelope([]byte(v[0]))
 			if err != nil {
 				return nil, fmt.Errorf(`invoke: %w`, err)
 			}
@@ -53,8 +53,8 @@ func (c *ChaincodeInstanceServiceEnvelopInvoker) Invoke(
 	return c.ChaincodeInstanceInvoker.Invoke(ctx, fn, args, target)
 }
 
-// parse base64 envelop
-func ParseEnvelop(base64Env []byte) ([]byte, error) {
+// decode base64 envelop
+func DecodeEnvelope(base64Env []byte) ([]byte, error) {
 	dst := make([]byte, base64.StdEncoding.DecodedLen(len(base64Env)))
 	n, err := base64.StdEncoding.Decode(dst, base64Env)
 	if err != nil {

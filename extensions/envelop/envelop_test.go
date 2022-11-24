@@ -98,7 +98,7 @@ var _ = Describe(`Envelop`, func() {
 			}
 			jsonEnv, _ := json.Marshal(env)
 			base64Env := base64.StdEncoding.EncodeToString(jsonEnv)
-			bb, err := envelop.ParseEnvelop([]byte(base64Env))
+			bb, err := envelop.DecodeEnvelope([]byte(base64Env))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(bb).To(Equal([]byte(jsonEnv)))
 		})
