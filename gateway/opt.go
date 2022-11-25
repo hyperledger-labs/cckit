@@ -16,11 +16,10 @@ import (
 
 type (
 	Opts struct {
-		Context        []ContextOpt
-		InvokerContext []ContextOpt // save context for chaincode invoker
-		Input          []InputOpt
-		Output         []OutputOpt
-		Event          []EventOpt
+		Context []ContextOpt
+		Input   []InputOpt
+		Output  []OutputOpt
+		Event   []EventOpt
 	}
 
 	InstanceOpts struct {
@@ -31,18 +30,10 @@ type (
 	Opt func(*Opts)
 
 	ContextOpt func(ctx context.Context) context.Context
-	InputOpt   func(input *ChaincodeInput) error
+	InputOpt   func(ctx context.Context, input *ChaincodeInput) error
 	OutputOpt  func(action InvocationType, response *peer.Response) error
 	EventOpt   func(event *ChaincodeEvent) error
 )
-
-func WithInvoker(invoker CustomChaincodeInstanceInvoker) Opt {
-	return func(opts *Opts) {
-		opts.InvokerContext = append(opts.InvokerContext, func(ctx context.Context) context.Context {
-			return ContextWithInvoker(ctx, invoker)
-		})
-	}
-}
 
 func WithDefaultSigner(defaultSigner msp.SigningIdentity) Opt {
 	return func(opts *Opts) {
@@ -54,7 +45,7 @@ func WithDefaultSigner(defaultSigner msp.SigningIdentity) Opt {
 
 func WithDefaultTransientMapValue(key string, value []byte) Opt {
 	return func(o *Opts) {
-		o.Input = append(o.Input, func(input *ChaincodeInput) error {
+		o.Input = append(o.Input, func(ctx context.Context, input *ChaincodeInput) error {
 			if input.Transient == nil {
 				input.Transient = make(map[string][]byte)
 			}
@@ -77,7 +68,7 @@ func WithEncryption(encKey []byte) Opt {
 
 func WithArgsEncryption(encKey []byte) Opt {
 	return func(o *Opts) {
-		o.Input = append(o.Input, func(ccInput *ChaincodeInput) (err error) {
+		o.Input = append(o.Input, func(ctx context.Context, ccInput *ChaincodeInput) (err error) {
 			ccInput.Args, err = encryption.EncryptArgsBytes(encKey, ccInput.Args)
 			return err
 		})

@@ -85,7 +85,7 @@ func (cis *ChaincodeInstanceService) Query(ctx context.Context, req *ChaincodeIn
 	signer, _ := SignerFromContext(ctx)
 
 	for _, i := range cis.Opts.Input {
-		if err := i(req.Input); err != nil {
+		if err := i(ctx, req.Input); err != nil {
 			return nil, err
 		}
 	}
@@ -125,8 +125,9 @@ func (cis *ChaincodeInstanceService) Invoke(ctx context.Context, req *ChaincodeI
 	// if smth goes wrong we'll see it on the step below
 	signer, _ := SignerFromContext(ctx)
 
+	// invoke input opts-func to handle envelop and etc.
 	for _, i := range cis.Opts.Input {
-		if err := i(req.Input); err != nil {
+		if err := i(ctx, req.Input); err != nil {
 			return nil, err
 		}
 	}

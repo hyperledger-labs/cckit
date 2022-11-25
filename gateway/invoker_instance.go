@@ -14,17 +14,10 @@ type (
 		Invoke(ctx context.Context, fn string, args []interface{}, target interface{}) (interface{}, error)
 	}
 
-	CustomChaincodeInstanceInvoker interface {
-		ChaincodeInstanceInvoker
-		DefaultInvoker(ChaincodeInstanceInvoker)
-	}
-
 	ChaincodeInstanceServiceInvoker struct {
 		ChaincodeInstance ChaincodeInstanceServiceServer
 		Serializer        serialize.Serializer
 	}
-
-	NewInvokerFunc = func(ChaincodeInstanceInvoker) ChaincodeInstanceInvoker // custom invoker
 )
 
 // NewChaincodeInstanceServiceInvoker

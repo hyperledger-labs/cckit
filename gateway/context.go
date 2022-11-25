@@ -16,22 +16,7 @@ const (
 	CtxTransientKey = contextKey(`TransientMap`)
 	CtxSignerKey    = contextKey(`SigningIdentity`)
 	CtxTxWaiterKey  = contextKey(`TxWaiter`)
-	CtxInvokerKey   = contextKey(`Invoker`) // key for custom invoker
 )
-
-// save custom invoker in context
-func ContextWithInvoker(ctx context.Context, invoker CustomChaincodeInstanceInvoker) context.Context {
-	return context.WithValue(ctx, CtxInvokerKey, invoker)
-}
-
-// get custom invoker from context
-func InvokerFromContext(ctx context.Context) (CustomChaincodeInstanceInvoker, error) {
-	if invoker, ok := ctx.Value(CtxInvokerKey).(CustomChaincodeInstanceInvoker); !ok {
-		return nil, ErrNewInvokerNotDefinedInContext
-	} else {
-		return invoker, nil
-	}
-}
 
 func ContextWithTransientMap(ctx context.Context, transient map[string][]byte) context.Context {
 	return context.WithValue(ctx, CtxTransientKey, transient)
