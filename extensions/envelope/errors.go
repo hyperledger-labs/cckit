@@ -1,4 +1,4 @@
-package envelop
+package envelope
 
 import "errors"
 
@@ -8,4 +8,6 @@ var (
 	ErrSignatureCheckFailed = errors.New(`check signature failed`)
 
 	ErrDeadlineExpired = errors.New(`deadline expired`)
+
+	ErrCheckSignatureFailed = errors.New(`check signature failed`)
 )

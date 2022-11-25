@@ -1,4 +1,4 @@
-package envelop_test
+package envelope_test
 
 import (
 	"encoding/base64"
@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/hyperledger-labs/cckit/extensions/envelop"
-	"github.com/hyperledger-labs/cckit/extensions/envelop/testdata"
+	e "github.com/hyperledger-labs/cckit/extensions/envelope"
+	"github.com/hyperledger-labs/cckit/extensions/envelope/testdata"
 	identitytestdata "github.com/hyperledger-labs/cckit/identity/testdata"
 	"github.com/hyperledger-labs/cckit/serialize"
 
@@ -21,8 +21,6 @@ func TestEnvelop(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Envelop suite")
 }
-
-var ()
 
 var (
 	Owner = identitytestdata.Certificates[0].MustIdentity(`SOME_MSP`)
@@ -40,15 +38,15 @@ var _ = Describe(`Envelop`, func() {
 	Describe("Signature methods", func() {
 
 		It("Allow to create keys", func() {
-			publicKey, privateKey, err := envelop.CreateKeys()
+			publicKey, privateKey, err := e.CreateKeys()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(publicKey)).To(Equal(32))
 			Expect(len(privateKey)).To(Equal(64))
 		})
 
 		It("Allow to create nonces", func() {
-			nonce1 := envelop.CreateNonce()
-			nonce2 := envelop.CreateNonce()
+			nonce1 := e.CreateNonce()
+			nonce2 := e.CreateNonce()
 
 			Expect(nonce1).NotTo(BeEmpty())
 			Expect(nonce2).NotTo(BeEmpty())
@@ -56,26 +54,26 @@ var _ = Describe(`Envelop`, func() {
 		})
 
 		It("Allow to create signature", func() {
-			_, privateKey, _ := envelop.CreateKeys()
-			_, sig := envelop.CreateSig(payload, envelop.CreateNonce(), privateKey)
+			_, privateKey, _ := e.CreateKeys()
+			_, sig := e.CreateSig(payload, e.CreateNonce(), privateKey)
 			Expect(len(sig)).To(Equal(64))
 		})
 
 		It("Allow to check valid signature", func() {
-			nonce := envelop.CreateNonce()
-			publicKey, privateKey, _ := envelop.CreateKeys()
-			_, sig := envelop.CreateSig(payload, nonce, privateKey)
-			err := envelop.CheckSig(payload, nonce, publicKey, sig)
+			nonce := e.CreateNonce()
+			publicKey, privateKey, _ := e.CreateKeys()
+			_, sig := e.CreateSig(payload, nonce, privateKey)
+			err := e.CheckSig(payload, nonce, publicKey, sig)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("Disallow to check signature with invalid payload", func() {
-			nonce := envelop.CreateNonce()
-			publicKey, privateKey, _ := envelop.CreateKeys()
-			_, sig := envelop.CreateSig(payload, nonce, privateKey)
+			nonce := e.CreateNonce()
+			publicKey, privateKey, _ := e.CreateKeys()
+			_, sig := e.CreateSig(payload, nonce, privateKey)
 			invalidPayload := []byte("invalid payload")
-			err := envelop.CheckSig(invalidPayload, nonce, publicKey, sig)
-			Expect(err).Should(MatchError(envelop.ErrSignatureCheckFailed))
+			err := e.CheckSig(invalidPayload, nonce, publicKey, sig)
+			Expect(err).Should(MatchError(e.ErrSignatureCheckFailed))
 		})
 
 	})
@@ -83,11 +81,11 @@ var _ = Describe(`Envelop`, func() {
 	Describe("Handle base64 envelop", func() {
 
 		It("Allow to parse base64 envelop", func() {
-			publicKey, privateKey, _ := envelop.CreateKeys()
-			nonce := envelop.CreateNonce()
-			hashToSign := envelop.Hash(payload, nonce)
-			_, sig := envelop.CreateSig(payload, nonce, privateKey)
-			env := &envelop.Envelop{
+			publicKey, privateKey, _ := e.CreateKeys()
+			nonce := e.CreateNonce()
+			hashToSign := e.Hash(payload, nonce)
+			_, sig := e.CreateSig(payload, nonce, privateKey)
+			envelope := &e.Envelope{
 				PublicKey:       publicKey,
 				Signature:       sig,
 				Nonce:           nonce,
@@ -96,11 +94,11 @@ var _ = Describe(`Envelop`, func() {
 				Deadline:        testcc.MustProtoTimestamp(time.Now().AddDate(0, 2, 0)),
 				DomainSeparator: []byte("DomainSeparator"),
 			}
-			jsonEnv, _ := json.Marshal(env)
-			base64Env := base64.StdEncoding.EncodeToString(jsonEnv)
-			bb, err := envelop.DecodeEnvelope([]byte(base64Env))
+			jj, _ := json.Marshal(envelope)
+			b64 := base64.StdEncoding.EncodeToString(jj)
+			bb, err := e.DecodeEnvelope([]byte(b64))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(bb).To(Equal([]byte(jsonEnv)))
+			Expect(bb).To(Equal([]byte(jj)))
 		})
 
 	})
@@ -108,16 +106,16 @@ var _ = Describe(`Envelop`, func() {
 	Describe("Signature verification", func() {
 
 		var (
-			serializedEnv []byte
-			serializer    = serialize.PreferJSONSerializer
+			serializedEnvelope []byte
+			serializer         = serialize.DefaultSerializer
 		)
 
 		BeforeEach(func() {
-			publicKey, privateKey, _ := envelop.CreateKeys()
-			nonce := envelop.CreateNonce()
-			hashToSign := envelop.Hash(payload, nonce)
-			_, sig := envelop.CreateSig(payload, nonce, privateKey)
-			env := &envelop.Envelop{
+			publicKey, privateKey, _ := e.CreateKeys()
+			nonce := e.CreateNonce()
+			hashToSign := e.Hash(payload, nonce)
+			_, sig := e.CreateSig(payload, nonce, privateKey)
+			envelope := &e.Envelope{
 				PublicKey:       publicKey,
 				Signature:       sig,
 				Nonce:           nonce,
@@ -126,8 +124,7 @@ var _ = Describe(`Envelop`, func() {
 				Deadline:        testcc.MustProtoTimestamp(time.Now().AddDate(0, 2, 0)),
 				DomainSeparator: []byte("DomainSeparator"),
 			}
-			serializedEnv, _ = serializer.ToBytesFrom(env)
-			// jsonEnv, _ = json.Marshal(env)
+			serializedEnvelope, _ = serializer.ToBytesFrom(envelope)
 		})
 
 		It("Allow to verify valid signature", func() {
@@ -135,7 +132,7 @@ var _ = Describe(`Envelop`, func() {
 				`envelop chaincode mock`,
 				testdata.NewEnvelopCC(chaincodeName, channelName))
 
-			resp := envelopCC.Invoke("invokeWithEnvelop", payload, serializedEnv)
+			resp := envelopCC.Invoke("invokeWithEnvelop", payload, serializedEnvelope)
 			Expect(resp.Status).To(BeNumerically("==", 200))
 		})
 
@@ -145,7 +142,7 @@ var _ = Describe(`Envelop`, func() {
 				testdata.NewEnvelopCC(chaincodeName, channelName))
 
 			invalidPayload := []byte("invalid payload")
-			resp := envelopCC.Invoke("invokeWithEnvelop", invalidPayload, serializedEnv)
+			resp := envelopCC.Invoke("invokeWithEnvelop", invalidPayload, serializedEnvelope)
 			Expect(resp.Status).To(BeNumerically("==", 500))
 		})
 
