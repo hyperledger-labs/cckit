@@ -13,4 +13,7 @@ var (
 
 	// ErrUnknownInvocationType query or invoke
 	ErrUnknownInvocationType = errors.New(`unknown invocation type`)
+
+	// ErrNewInvokerNotDefinedInContext is not defined in context
+	ErrNewInvokerNotDefinedInContext = errors.New(`new invoker is not defined in context`)
 )
