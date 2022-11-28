@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-const txKey = "tx_"
+const nonceObjectType = "nonce"
 
 // pre-middleware for checking signature that is got in envelop
 func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFunc {
@@ -33,19 +33,22 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 				}
 
 				// replay attack check
-				txHash := getTxHash(iArgs[1], envelope.Nonce, envelope.PublicKey)
-				key, err := c.Stub().CreateCompositeKey(txKey, []string{txHash})
+				txHash := txNonceKey(iArgs[1], envelope.Nonce, envelope.PublicKey)
+				key, err := c.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
 				if err != nil {
 					return router.ErrorResponse(err)
 				}
 				bb, err := c.Stub().GetState(key)
 				if bb == nil && err == nil {
-					c.Stub().PutState(key, []byte("exists"))
+					if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
+						return router.ErrorResponse(err)
+					}
 					if err := CheckSig(iArgs[1], envelope.Nonce, envelope.PublicKey, envelope.Signature); err != nil {
 						c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 						return router.ErrorResponse(ErrCheckSignatureFailed)
 					}
 				} else {
+					c.Logger().Sugar().Error(ErrTxAlreadyExecuted)
 					return router.ErrorResponse(ErrTxAlreadyExecuted)
 				}
 			}
@@ -54,7 +57,7 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 	}
 }
 
-func getTxHash(payload []byte, nonce string, pubKey []byte) string {
+func txNonceKey(payload []byte, nonce string, pubKey []byte) string {
 	bb := append(payload, pubKey...)
 	bb = append(bb, nonce...)
 	hashed := sha3.Sum256(bb)
