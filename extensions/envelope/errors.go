@@ -10,4 +10,6 @@ var (
 	ErrDeadlineExpired = errors.New(`deadline expired`)
 
 	ErrCheckSignatureFailed = errors.New(`check signature failed`)
+
+	ErrTxAlreadyExecuted = errors.New(`tx already executed`)
 )

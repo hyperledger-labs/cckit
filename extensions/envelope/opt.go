@@ -29,7 +29,7 @@ func WithEnvelope() gateway.Opt {
 	}
 }
 
-// parse base64 envelop
+// decode base64 envelop
 func DecodeEnvelope(encEnvelope []byte) ([]byte, error) {
 	dst := make([]byte, base64.StdEncoding.DecodedLen(len(encEnvelope)))
 	n, err := base64.StdEncoding.Decode(dst, encEnvelope)

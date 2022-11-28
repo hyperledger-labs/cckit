@@ -3,6 +3,7 @@ package envelope_test
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -146,6 +147,36 @@ var _ = Describe(`Envelop`, func() {
 			Expect(resp.Status).To(BeNumerically("==", 500))
 		})
 
+	})
+
+	Describe("Nonce verification (replay attack)", func() {
+		It("Disallow to execute tx with the same parameters (nonce, payload, pubkey)", func() {
+			envelopCC = testcc.NewMockStub(
+				`envelop chaincode mock`,
+				testdata.NewEnvelopCC(chaincodeName, channelName))
+
+			publicKey, privateKey, _ := e.CreateKeys()
+			nonce := "thesamenonce"
+			hashToSign := e.Hash(payload, nonce)
+			_, sig := e.CreateSig(payload, nonce, privateKey)
+			envelope := &e.Envelope{
+				PublicKey:       publicKey,
+				Signature:       sig,
+				Nonce:           nonce,
+				HashToSign:      hashToSign[:],
+				HashFunc:        "SHA3-256",
+				Deadline:        testcc.MustProtoTimestamp(time.Now().AddDate(0, 2, 0)),
+				DomainSeparator: []byte("DomainSeparator"),
+			}
+			serializer := serialize.DefaultSerializer
+			serializedEnvelope, _ := serializer.ToBytesFrom(envelope)
+
+			resp := envelopCC.Invoke("invokeWithEnvelop", payload, serializedEnvelope)
+			Expect(resp.Status).To(BeNumerically("==", 200))
+
+			resp = envelopCC.Invoke("invokeWithEnvelop", payload, serializedEnvelope)
+			Expect(errors.New(resp.Message)).To(MatchError(e.ErrTxAlreadyExecuted))
+		})
 	})
 
 })

@@ -1,12 +1,16 @@
 package envelope
 
 import (
+	"encoding/base64"
 	"time"
 
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/sha3"
 )
+
+const txKey = "tx_"
 
 // pre-middleware for checking signature that is got in envelop
 func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFunc {
@@ -27,12 +31,32 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 					c.Logger().Sugar().Error(ErrDeadlineExpired)
 					return router.ErrorResponse(ErrDeadlineExpired)
 				}
-				if err := CheckSig(iArgs[1], envelope.Nonce, envelope.PublicKey, envelope.Signature); err != nil {
-					c.Logger().Sugar().Error(ErrCheckSignatureFailed)
-					return router.ErrorResponse(ErrCheckSignatureFailed)
+
+				// replay attack check
+				txHash := getTxHash(iArgs[1], envelope.Nonce, envelope.PublicKey)
+				key, err := c.Stub().CreateCompositeKey(txKey, []string{txHash})
+				if err != nil {
+					return router.ErrorResponse(err)
+				}
+				bb, err := c.Stub().GetState(key)
+				if bb == nil && err == nil {
+					c.Stub().PutState(key, []byte("exists"))
+					if err := CheckSig(iArgs[1], envelope.Nonce, envelope.PublicKey, envelope.Signature); err != nil {
+						c.Logger().Sugar().Error(ErrCheckSignatureFailed)
+						return router.ErrorResponse(ErrCheckSignatureFailed)
+					}
+				} else {
+					return router.ErrorResponse(ErrTxAlreadyExecuted)
 				}
 			}
 		}
 		return next(c)
 	}
+}
+
+func getTxHash(payload []byte, nonce string, pubKey []byte) string {
+	bb := append(payload, pubKey...)
+	bb = append(bb, nonce...)
+	hashed := sha3.Sum256(bb)
+	return base64.StdEncoding.EncodeToString(hashed[:])
 }
