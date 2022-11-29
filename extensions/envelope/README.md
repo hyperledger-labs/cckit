@@ -25,7 +25,8 @@ The envelope is a structure that consists of the following attributes:
 4. Sign the hash (ed25519)
 5. Create the envelope
 6. Encode the envelope to base64
-7. Send the envelope in request header (X-Envelop)
+7. Send the envelope in request header (X-Envelop) if the cckit gateway is used
+8. Get envelope in the cckit gateway, decode it from base64 and pack it as a third chaincode argument
 
 ### Receive the envelope and verify the signature (chaincode)
 
