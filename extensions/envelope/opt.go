@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/hyperledger-labs/cckit/gateway"
 	"google.golang.org/grpc/metadata"
@@ -16,7 +17,7 @@ func WithEnvelope() gateway.Opt {
 			// get envelop with signature from header and add as second arg
 			md, ok := metadata.FromIncomingContext(ctx)
 			if ok {
-				if v, ok := md["x-envelop"]; ok {
+				if v, ok := md[strings.ToLower(keyEnvelope)]; ok {
 					envelope, err := DecodeEnvelope([]byte(v[0]))
 					if err != nil {
 						return fmt.Errorf(`invoke: %w`, err)
