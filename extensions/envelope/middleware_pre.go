@@ -16,7 +16,7 @@ const nonceObjectType = "nonce"
 func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFunc {
 	return func(c router.Context) peer.Response {
 		iArgs := c.GetArgs()
-		if len(iArgs) > 1 {
+		if len(iArgs) > 1 && iArgs[1] != nil {
 			if len(iArgs) == 2 {
 				c.Logger().Sugar().Error(ErrSignatureNotFound)
 				return router.ErrorResponse(ErrSignatureNotFound)
@@ -32,8 +32,18 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 					return router.ErrorResponse(ErrDeadlineExpired)
 				}
 
+				// check method and channel names because envelope can only be used once for channel+chaincode+method combination
+				if string(iArgs[0]) != envelope.Method {
+					c.Logger().Sugar().Error(ErrInvalidMethod)
+					return router.ErrorResponse(ErrInvalidMethod)
+				}
+				if string(c.Stub().GetChannelID()) != envelope.Channel {
+					c.Logger().Sugar().Error(ErrInvalidChannel)
+					return router.ErrorResponse(ErrInvalidChannel)
+				}
+
 				// replay attack check
-				txHash := txNonceKey(iArgs[1], envelope.Nonce, envelope.PublicKey)
+				txHash := txNonceKey(iArgs[1], envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
 				key, err := c.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
 				if err != nil {
 					return router.ErrorResponse(err)
@@ -43,7 +53,7 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 					if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 						return router.ErrorResponse(err)
 					}
-					if err := CheckSig(iArgs[1], envelope.Nonce, envelope.PublicKey, envelope.Signature); err != nil {
+					if err := CheckSig(iArgs[1], envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey, envelope.Signature); err != nil {
 						c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 						return router.ErrorResponse(ErrCheckSignatureFailed)
 					}
@@ -57,9 +67,12 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 	}
 }
 
-func txNonceKey(payload []byte, nonce string, pubKey []byte) string {
+func txNonceKey(payload []byte, nonce, channel, chaincode, method string, pubKey []byte) string {
 	bb := append(payload, pubKey...)
 	bb = append(bb, nonce...)
+	bb = append(bb, channel...)
+	bb = append(bb, chaincode...)
+	bb = append(bb, method...)
 	hashed := sha3.Sum256(bb)
 	return base64.StdEncoding.EncodeToString(hashed[:])
 }
