@@ -4,12 +4,12 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
-const keyEnvelope = "X-Envelope"
+const HeaderKey = "X-Envelope"
 
 // handle custom header to pass envelope
 func EnvelopeMatcher(key string) (string, bool) {
 	switch key {
-	case keyEnvelope:
+	case HeaderKey:
 		return key, true
 	default:
 		return runtime.DefaultHeaderMatcher(key)

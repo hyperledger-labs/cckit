@@ -17,7 +17,7 @@ func WithEnvelope() gateway.Opt {
 			// get envelop with signature from header and add as second arg
 			md, ok := metadata.FromIncomingContext(ctx)
 			if ok {
-				if v, ok := md[strings.ToLower(keyEnvelope)]; ok {
+				if v, ok := md[strings.ToLower(HeaderKey)]; ok {
 					envelope, err := DecodeEnvelope([]byte(v[0]))
 					if err != nil {
 						return fmt.Errorf(`invoke: %w`, err)

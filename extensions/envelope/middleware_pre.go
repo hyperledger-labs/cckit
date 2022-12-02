@@ -10,18 +10,25 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-const nonceObjectType = "nonce"
+const (
+	nonceObjectType = "nonce"
+
+	// argument indexes
+	methodNamePos = iota - 1
+	payloadPos
+	sigPos
+)
 
 // pre-middleware for checking signature that is got in envelop
 func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFunc {
 	return func(c router.Context) peer.Response {
 		iArgs := c.GetArgs()
-		if len(iArgs) > 1 && iArgs[1] != nil {
+		if len(iArgs) > 1 && iArgs[payloadPos] != nil {
 			if len(iArgs) == 2 {
 				c.Logger().Sugar().Error(ErrSignatureNotFound)
 				return router.ErrorResponse(ErrSignatureNotFound)
 			} else {
-				data, err := c.Serializer().FromBytesTo(iArgs[2], &Envelope{})
+				data, err := c.Serializer().FromBytesTo(iArgs[sigPos], &Envelope{})
 				if err != nil {
 					c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 					return router.ErrorResponse(err)
@@ -33,7 +40,7 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 				}
 
 				// check method and channel names because envelope can only be used once for channel+chaincode+method combination
-				if string(iArgs[0]) != envelope.Method {
+				if string(iArgs[methodNamePos]) != envelope.Method {
 					c.Logger().Sugar().Error(ErrInvalidMethod)
 					return router.ErrorResponse(ErrInvalidMethod)
 				}
@@ -43,7 +50,7 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 				}
 
 				// replay attack check
-				txHash := txNonceKey(iArgs[1], envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
+				txHash := txNonceKey(iArgs[payloadPos], envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
 				key, err := c.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
 				if err != nil {
 					return router.ErrorResponse(err)
@@ -53,7 +60,7 @@ func Verify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFun
 					if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 						return router.ErrorResponse(err)
 					}
-					if err := CheckSig(iArgs[1], envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey, envelope.Signature); err != nil {
+					if err := CheckSig(iArgs[payloadPos], envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey, envelope.Signature); err != nil {
 						c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 						return router.ErrorResponse(ErrCheckSignatureFailed)
 					}
