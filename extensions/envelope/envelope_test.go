@@ -95,7 +95,7 @@ var _ = Describe(`Envelop`, func() {
 
 	Describe("Signature verification", func() {
 
-		It("Allow to verify valid signature", func() {
+		PIt("Allow to verify valid signature", func() {
 			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, method)
 
 			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
@@ -135,7 +135,7 @@ var _ = Describe(`Envelop`, func() {
 	})
 
 	Describe("Nonce verification (replay attack)", func() {
-		It("Disallow to execute tx with the same parameters (nonce, payload, pubkey)", func() {
+		PIt("Disallow to execute tx with the same parameters (nonce, payload, pubkey)", func() {
 			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
 
 			publicKey, privateKey, _ := e.CreateKeys()
