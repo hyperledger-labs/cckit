@@ -14,5 +14,8 @@ message Envelope {
   bytes hash_to_sign = 4; // payload hash
   string hash_func = 5; // function used for hashing
   google.protobuf.Timestamp deadline = 6; // signature is not valid after deadline (EIP-2612)
-  bytes domain_separator = 7; // to prevent replay attacks from other domains (EIP-2612)
+  // channel + chaincode + method are used as domain separator to prevent replay attack from other domains (EIP-2612)
+  string channel = 7;
+  string chaincode = 8;
+  string method = 9;
 }
