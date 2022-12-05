@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+option go_package = "github.com/hyperledger-labs/cckit/extensions/token";
+
+package extensions.token;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "mwitkow/go-proto-validators/validator.proto";
+
+
+// Balance
+service BalanceService {
+  // Returns the amount of tokens owned by account.
+  rpc GetBalance (BalanceId) returns (Balance) {
+    option (google.api.http) = {
+      get: "/token/balances/{symbol}/{group}/{address}"
+    };
+  }
+
+  rpc ListBalances (BalanceId) returns (Balances) {
+    option (google.api.http) = {
+      get: "/token/balances/{symbol}/{group}"
+    };
+  }
+
+  // Moves amount tokens from the caller’s account to recipient.
+  // Returns transfer details
+  rpc Transfer (TransferRequest) returns (TransferResponse) {
+    option (google.api.http) = {
+      post: "/token/transfer"
+      body: "*"
+    };
+  }
+
+  rpc TransferBatch (TransferBatchRequest) returns (TransferBatchResponse) {
+    option (google.api.http) = {
+      post: "/token/transfer-batch"
+      body: "*"
+    };
+  }
+}
+
+message TransferRequest  {
+  string recipient = 1 [(validator.field) = {string_not_empty : true}];
+  string symbol = 2 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 3;
+  string amount = 4 [(validator.field) = {string_not_empty : true}];
+  repeated AddMetaRequest meta = 5;
+}
+
+message TransferResponse {
+  string sender = 1;
+  string recipient = 2;
+  string symbol = 3;
+  repeated string group = 4;
+  string amount = 5;
+  repeated Meta meta = 6;
+}
+
+message TransferBatchRequest  {
+  repeated TransferRequest transfers = 1 [(validator.field) = {repeated_count_min : 1}];
+}
+
+message TransferBatchResponse  {
+  repeated TransferResponse transfers = 1;
+}
+
+
+// Identifier: Balance
+message BalanceId {
+  string symbol = 2;
+  repeated string group = 3;
+  string address = 1;
+}
+
+// State: Balance
+message Balance {
+  // Token symbol
+  string symbol = 1;
+  // Token group
+  repeated string group = 2;
+  // account address
+  string address = 3;
+  // Balance amount
+  string amount = 4;
+}
+
+// List: balances
+message Balances {
+  repeated Balance items = 1;
+}
+
+enum OperationType {
+  OPERATION_UNKNOWN = 0;
+  OPERATION_TRANSFER = 1;
+  OPERATION_MINT = 2;
+  OPERATION_BURN = 3;
+  OPERATION_LOCK = 4;
+}
+
+message Operation {
+  string sender = 1;
+  string recipient = 2;
+  string symbol = 3;
+  repeated string group = 4;
+  string amount = 5;
+  OperationType type = 6;
+}
+
+message TransferOperation  {
+  string sender = 1 [(validator.field) = {string_not_empty : true}];
+  string recipient = 2 [(validator.field) = {string_not_empty : true}];
+  string symbol = 3 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 4;
+  string amount = 5 [(validator.field) = {string_not_empty : true}];
+  repeated AddMetaRequest meta = 6;
+}
+
+message BalanceOperation  {
+  string address = 1 [(validator.field) = {string_not_empty : true}];
+  string symbol = 2 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 3;
+  string amount = 4 [(validator.field) = {string_not_empty : true}];
+  repeated AddMetaRequest meta = 5;
+}
+
+// Event: emitted when Transfer method has been invoked
+message Transferred  {
+  string sender = 1;
+  string recipient = 2;
+  string symbol = 3;
+  repeated string group = 4;
+  string amount = 5;
+  repeated Meta meta = 6;
+}
+
+// Event: emitted when TransferBatch method has been invoked
+message TransferredBatch  {
+  repeated Transferred transfers = 1;
+}
+
+message AddMetaRequest {
+  string key = 1 [(validator.field) = {string_not_empty : true}];
+  string value = 2 [(validator.field) = {string_not_empty : true}];
+}
+
+message Meta {
+  string key = 1;
+  string value = 2;
+}
+
+// Id: UTXO
+message UTXOId {
+  string symbol = 1;
+  string group = 2;  // !!!! should be repeated
+  string address = 3;
+  string tx_id = 4;
+}
+
+// State: UTXO
+message UTXO {
+  string symbol = 1; // Token symbol
+  string group = 2; // Token groups, joined
+  string address = 3; // account address
+  string tx_id = 4; // Transaction Id
+  string amount = 6; // amount
+  bool locked = 7;
+  repeated Meta meta = 8; // meta
+}
+
+message UTXOs {
+  repeated UTXO items = 1;
+}
