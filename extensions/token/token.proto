@@ -1,0 +1,199 @@
+syntax = "proto3";
+
+option go_package = "github.com/hyperledger-labs/cckit/extensions/token";
+
+package extensions.token;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "mwitkow/go-proto-validators/validator.proto";
+
+
+service TokenService {
+
+  rpc GetConfig (google.protobuf.Empty) returns (Config) {
+    option (google.api.http) = {
+      get: "/token/config"
+    };
+  }
+
+  rpc SetConfig (Config) returns (Config) {
+    option (google.api.http) = {
+      put: "/token/config"
+      body: "*"
+    };
+  }
+
+  rpc GetToken (TokenId) returns (Token) {
+    option (google.api.http) = {
+      get: "/token/tokens/{symbol}/{group}"
+    };
+  }
+
+  rpc GetDefaultToken (google.protobuf.Empty) returns (Token) {
+    option (google.api.http) = {
+      get: "/token/default"
+    };
+  }
+
+  rpc CreateTokenType (CreateTokenTypeRequest) returns (TokenType) {
+    option (google.api.http) = {
+      post: "/token/types"
+      body: "*"
+    };
+  }
+
+  rpc GetTokenType(TokenTypeId) returns (TokenType) {
+    option (google.api.http) = {
+      get: "/token/types/{symbol}"
+    };
+  }
+
+  rpc ListTokenTypes(google.protobuf.Empty) returns (TokenTypes) {
+    option (google.api.http) = {
+      get: "/token/types"
+    };
+  }
+
+  rpc UpdateTokenType (UpdateTokenTypeRequest) returns (TokenType) {
+    option (google.api.http) = {
+      put: "/token/types/{symbol}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteTokenType (TokenTypeId) returns (TokenType) {
+    option (google.api.http) = {
+      delete: "/token/types/{symbol}"
+    };
+  }
+
+  rpc GetTokenGroups(TokenTypeId) returns (TokenGroups) {
+    option (google.api.http) = {
+      get: "/token/types/{symbol}/groups"
+    };
+  }
+
+  rpc CreateTokenGroup (CreateTokenGroupRequest) returns (TokenGroup) {
+    option (google.api.http) = {
+      post: "/token/types/{symbol}/groups"
+      body: "*"
+    };
+  }
+
+  rpc GetTokenGroup (TokenGroupId) returns (TokenGroup) {
+    option (google.api.http) = {
+      get: "/token/tokens/{symbol}/groups/{group}"
+    };
+  }
+
+  rpc DeleteTokenGroup (TokenGroupId) returns (Token) {
+    option (google.api.http) = {
+      delete: "/token/tokens/{symbol}/groups/{group}"
+    };
+  }
+}
+
+message CreateTokenTypeRequest {
+  string symbol = 1 [(validator.field) = {string_not_empty : true}];
+  string name = 2 [(validator.field) = {string_not_empty : true}];
+  uint32 decimals = 3 [(validator.field) = {int_lt: 9}]; // from 0 to 8
+  TokenGroupType group_type = 4 [(validator.field) = {is_in_enum : true}];;
+  string total_supply = 5; // big.Int
+  repeated TokenMetaRequest meta = 6;
+}
+
+message UpdateTokenTypeRequest {
+  string symbol = 1 [(validator.field) = {string_not_empty : true}];
+  string name = 2 [(validator.field) = {string_not_empty : true}];
+  string total_supply = 3; // big.Int
+  repeated TokenMetaRequest meta = 4;
+}
+
+message CreateTokenGroupRequest {
+  string symbol = 1 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 2 [(validator.field) = {repeated_count_min : 1}];
+  string name = 3 [(validator.field) = {string_not_empty : true}];
+  string total_supply = 4; // big.Int
+  repeated TokenMetaRequest meta = 5;
+}
+
+message Config {
+  TokenId default_token = 1;
+  int32 max_token_types_num = 2;
+  int32 max_token_groups_num = 3;
+}
+
+message TokenId {
+  string symbol = 1 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 2;
+}
+
+// Id: toke type id
+message TokenTypeId {
+  string symbol = 1;
+}
+
+// State: TokenType
+message TokenType {
+  string symbol = 1;
+  string name = 2;
+  uint32 decimals = 3;
+  string total_supply = 4;
+  TokenGroupType group_type = 5;
+  repeated TokenMeta meta = 6;
+}
+
+message TokenTypes {
+  repeated TokenType types = 1;
+}
+
+message TokenGroupId {
+  string symbol = 1;
+  repeated string group = 2;
+}
+
+// State: TokenGroup
+message TokenGroup {
+  string symbol = 1;
+  repeated string group = 2;
+  string name = 3;
+  string total_supply = 4;
+  repeated TokenMeta meta = 5;
+}
+
+message TokenGroups {
+  repeated TokenGroup groups = 1;
+}
+
+message TokenMetaRequest {
+  string key = 1 [(validator.field) = {string_not_empty : true}];
+  string value = 2 [(validator.field) = {string_not_empty : true}];
+}
+
+message TokenMeta {
+  string key = 1;
+  string value = 2;
+}
+
+message Token  {
+  TokenType type = 1;
+  TokenGroup group = 2;
+}
+
+enum TokenGroupType {
+  OPTIONAL = 0;
+  REQUIRED = 1;
+  NOT_ALLOWED = 3;
+}
+
+message TokenTypeCreated {
+  string symbol = 1;
+  string name = 2;
+}
+
+message TokenGroupCreated {
+  string symbol = 1;
+  repeated string group = 2;
+  string name = 3;
+}

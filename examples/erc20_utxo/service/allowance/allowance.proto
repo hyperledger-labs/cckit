@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+option go_package = "github.com/hyperledger-labs/cckit/examples/erc20_utxo/service/allowance";
+package examples.erc20_utxo.service.allowance;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "mwitkow/go-proto-validators/validator.proto";
+
+service AllowanceService {
+  // Returns the remaining number of tokens that spender will be allowed to spend on behalf of owner through transfersender.
+  // This is zero by default.
+  rpc GetAllowance (AllowanceId) returns (Allowance) {
+    option (google.api.http) = {
+      get: "/allowance/{owner}/{spender}/{symbol}/{group}"
+    };
+  }
+
+  // Sets amount as the allowance of spender over the caller’s tokens.
+  // Emits an ApprovalEvent
+  rpc Approve (ApproveRequest) returns (Allowance) {
+    option (google.api.http) = {
+      post: "/allowance/approve"
+    };
+  }
+  // Moves amount tokens from sender to recipient using the allowance mechanism.
+  // Amount is then deducted from the caller’s allowance.
+  // Emits TransferEvent
+  rpc TransferFrom (TransferFromRequest) returns (TransferFromResponse) {
+    option (google.api.http) = {
+      post: "/allowance/transfer-from"
+    };
+  }
+}
+
+message ApproveRequest {
+  string owner = 1 [(validator.field) = {string_not_empty : true}];
+  string spender = 2 [(validator.field) = {string_not_empty : true}];
+  string symbol = 3 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 4;
+  string amount = 5 [(validator.field) = {string_not_empty : true}];
+}
+
+message TransferFromRequest {
+  string owner = 1 [(validator.field) = {string_not_empty : true}];
+  string recipient = 2 [(validator.field) = {string_not_empty : true}];
+  string symbol = 3 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 4;
+  string amount = 5 [(validator.field) = {string_not_empty : true}];
+}
+
+message TransferFromResponse {
+  string owner = 1;
+  string recipient = 2;
+  string symbol = 3 ;
+  repeated string group = 4;
+  string amount = 5;
+}
+
+// Id: Allowance identifier
+message AllowanceId {
+  string owner = 1 [(validator.field) = {string_not_empty : true}];
+  string spender = 2 [(validator.field) = {string_not_empty : true}];
+  string symbol = 3 [(validator.field) = {string_not_empty : true}];
+  repeated string group = 4;
+}
+
+// State: Allowance
+message Allowance {
+  string  owner = 1;
+  string  spender = 2;
+  string symbol = 3 ;
+  repeated string group = 4;
+  string amount = 5;
+}
+
+message Operation {
+  string  owner = 1;
+  string  spender = 2;
+  string symbol = 3 ;
+  repeated string group = 4;
+  string amount = 5;
+}
+
+// List:
+message Allowances {
+  repeated Allowance items = 1;
+}
+
+// Event: Approved event is emitted when Approve method has been invoked
+message Approved  {
+  string owner = 1;
+  string spender = 2;
+  string symbol = 3 ;
+  repeated string group = 4;
+  string amount = 5;
+}
+
+// Event: TransferredFrom event is emitted when TransferFrom method has been invoked
+message TransferredFrom  {
+  string owner = 1;
+  string spender = 2;
+  string recipient = 3;
+  string symbol = 4 ;
+  repeated string group = 5;
+  string amount = 6;
+}

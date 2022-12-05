@@ -1,0 +1,197 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "erc20_utxo/service/allowance/allowance.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/allowance/approve": {
+      "post": {
+        "summary": "Sets amount as the allowance of spender over the caller’s tokens.\nEmits an ApprovalEvent",
+        "operationId": "AllowanceService_Approve",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/allowanceAllowance"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "AllowanceService"
+        ]
+      }
+    },
+    "/allowance/transfer-from": {
+      "post": {
+        "summary": "Moves amount tokens from sender to recipient using the allowance mechanism.\nAmount is then deducted from the caller’s allowance.\nEmits TransferEvent",
+        "operationId": "AllowanceService_TransferFrom",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/allowanceTransferFromResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "AllowanceService"
+        ]
+      }
+    },
+    "/allowance/{owner}/{spender}/{symbol}/{group}": {
+      "get": {
+        "summary": "Returns the remaining number of tokens that spender will be allowed to spend on behalf of owner through transfersender.\nThis is zero by default.",
+        "operationId": "AllowanceService_GetAllowance",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/allowanceAllowance"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "spender",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "minItems": 1
+          }
+        ],
+        "tags": [
+          "AllowanceService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "allowanceAllowance": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "spender": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "group": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "amount": {
+          "type": "string"
+        }
+      },
+      "title": "State: Allowance"
+    },
+    "allowanceTransferFromResponse": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "recipient": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "group": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "amount": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
