@@ -118,6 +118,11 @@ func (s *AccountStore) BurnLock(ctx router.Context, id *LockId) error {
 	return nil
 }
 
+// todo: add TransferLock implementation
+func (u *AccountStore) TransferLock(ctx router.Context, id *LockId, transfer *TransferOperation) error {
+	return nil
+}
+
 func (s *AccountStore) BurnAllLock(router.Context, *BalanceOperation) error {
 	return nil
 }
