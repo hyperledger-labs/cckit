@@ -33,7 +33,6 @@ var (
 	Symbol = `AA`
 	Group  = `001`
 
-	// TotalSupply = uint64(10000000)
 	TotalSupply   = big.NewInt(1000)
 	TotalSupplyX2 = big.NewInt(2000)
 	Int50         = big.NewInt(50)
@@ -41,6 +40,7 @@ var (
 	Int150        = big.NewInt(150)
 	Int200        = big.NewInt(200)
 	Int300        = big.NewInt(300)
+	Int600        = big.NewInt(600)
 	Int0          = big.NewInt(0)
 )
 
@@ -122,6 +122,15 @@ func (w *Wallet) ExpectTransfer(recipient string, amount string) {
 			Recipient: recipient,
 			Symbol:    w.symbol,
 			Amount:    amount,
+		})
+		Expect(err).NotTo(HaveOccurred())
+	})
+}
+
+func (w *Wallet) ExpectTransferLock(recipient string, amount string) {
+	w.cc.Tx(func() {
+		err := w.store.TransferLock(w.ctx, w.lockId, &token.TransferOperation{
+			Recipient: recipient,
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -299,11 +308,21 @@ var _ = Describe(`UTXO store`, func() {
 		user2Wallet.ExpectBalance(Int100.String())
 	})
 
+	It(`allow to transfer locked token`, func() {
+		ownerWallet.ExpectLock(Int100.String())
+		ownerWallet.ExpectTransferLock(user2Address, Int100.String())
+		ownerWallet.ExpectLockedBalance(Int0.String())
+		user2Wallet.ExpectLockedBalance(Int100.String())
+	})
+
 	It(`allow to lock all`, func() {
 		ownerWallet.ExpectLockAll()
-		ownerWallet.ExpectBalance(new(big.Int).Sub(TotalSupply, Int300).String()) // must be equal TotalSupply - 100 - 200
+		ownerWallet.ExpectLockedBalance(Int600.String())
+		ownerWallet.ExpectBalance(Int600.String())
 		user1Wallet.ExpectLockedBalance(Int50.String())
-		user2Wallet.ExpectLockedBalance(Int100.String())
+		user1Wallet.ExpectBalance(Int50.String())
+		user2Wallet.ExpectLockedBalance(Int200.String())
+		user2Wallet.ExpectBalance(Int200.String())
 	})
 
 })

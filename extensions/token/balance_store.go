@@ -23,6 +23,7 @@ type (
 		Lock(router.Context, *BalanceOperation) (*LockId, error)
 		Unlock(router.Context, *LockId) error
 		BurnLock(router.Context, *LockId) error
+		TransferLock(router.Context, *LockId, *TransferOperation) error
 		LockAll(router.Context, *BalanceOperation) error
 		BurnAllLock(router.Context, *BalanceOperation) error
 	}

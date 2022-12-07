@@ -398,6 +398,25 @@ func (u *UTXOStore) BurnLock(ctx router.Context, id *LockId) error {
 	return nil
 }
 
+// Transfer locked tokens between accounts
+func (u *UTXOStore) TransferLock(ctx router.Context, id *LockId, transfer *TransferOperation) error {
+	utxo, err := State(ctx).Get(&UTXOId{Symbol: id.Symbol, Group: id.Group, Address: id.Address, TxId: id.TxId}, &UTXO{})
+	if err != nil {
+		return err
+	}
+	transferLockedOutput := utxo.(*UTXO)
+	if err := State(ctx).Delete(transferLockedOutput.ID()); err != nil {
+		return err
+	}
+
+	transferLockedOutput.Address = transfer.Recipient
+	if err := State(ctx).Put(transferLockedOutput); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (u *UTXOStore) BurnAllLock(ctx router.Context, op *BalanceOperation) error {
 	utxos, err := State(ctx).ListWith(&UTXO{}, state.Key{op.Symbol, strings.Join(op.Group, `,`)}) // todo: ???
 	if err != nil {
