@@ -80,7 +80,7 @@ func (mp *MockedPeer) Invoke(
 		return nil, ``, err
 	}
 
-	response := mockStub.From(identity).WithTransient(transArgs).InvokeBytes(args...)
+	response := mockStub.From(identity).WithTransient(transArgs).WithChannel(channel).InvokeBytes(args...)
 	if response.Status == shim.ERROR {
 		err = errors.New(response.Message)
 	}
