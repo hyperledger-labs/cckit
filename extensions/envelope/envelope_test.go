@@ -99,7 +99,7 @@ var _ = Describe(`Envelop`, func() {
 		It("Allow to verify valid signature", func() {
 			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, methodInvoke)
 
-			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
 			resp := envelopCC.Invoke(methodInvoke, payload, serializedEnvelope)
 
 			Expect(resp.Status).To(BeNumerically("==", 200))
@@ -108,7 +108,7 @@ var _ = Describe(`Envelop`, func() {
 		It("Disallow to verify signature with invalid payload", func() {
 			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, methodInvoke)
 
-			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
 			invalidPayload := []byte("invalid payload")
 			resp := envelopCC.Invoke(methodInvoke, invalidPayload, serializedEnvelope)
 
@@ -118,23 +118,23 @@ var _ = Describe(`Envelop`, func() {
 		It("Disallow to verify signature with invalid method", func() {
 			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, "invalid method")
 
-			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
 			resp := envelopCC.Invoke(methodInvoke, payload, serializedEnvelope)
 
 			Expect(resp.Status).To(BeNumerically("==", 500))
 		})
 
-		PIt("Disallow to verify signature with invalid channel", func() {
+		It("Disallow to verify signature with invalid channel", func() {
 			serializedEnvelope, _ := createEnvelope(payload, "invalid channel", chaincode, methodInvoke)
 
-			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
 			resp := envelopCC.Invoke(methodInvoke, payload, serializedEnvelope)
 
 			Expect(resp.Status).To(BeNumerically("==", 500))
 		})
 
 		It("Don't check signature for query method", func() {
-			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
 			resp := envelopCC.Query(methodQuery, payload)
 
 			Expect(resp.Status).To(BeNumerically("==", 200))
@@ -144,7 +144,7 @@ var _ = Describe(`Envelop`, func() {
 
 	Describe("Nonce verification (replay attack)", func() {
 		It("Disallow to execute tx with the same parameters (nonce, payload, pubkey)", func() {
-			envelopCC = testcc.NewMockStub(`envelop chaincode mock`, testdata.NewEnvelopCC(chaincode, channel))
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
 
 			publicKey, privateKey, _ := e.CreateKeys()
 			nonce := "thesamenonce"

@@ -9,8 +9,7 @@ import (
 type EnvelopCC struct {
 }
 
-func NewEnvelopCC(chaincodeName, channelName string) *router.Chaincode {
-	// r := router.New(chaincodeName).Pre(envelope.PreVerify)
+func NewEnvelopCC(chaincodeName string) *router.Chaincode {
 	r := router.New(chaincodeName).Use(envelope.Verify())
 
 	r.Invoke("invokeWithEnvelope", func(c router.Context) (interface{}, error) {

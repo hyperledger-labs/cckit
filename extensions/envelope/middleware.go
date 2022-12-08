@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/hyperledger-labs/cckit/router"
-	"github.com/hyperledger/fabric-protos-go/peer"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/sha3"
 )
@@ -19,24 +18,6 @@ const (
 	nonceObjectType = "nonce"
 	invokeType      = "invoke"
 )
-
-// pre-middleware for checking signature that is got in envelop
-func PreVerify(next router.ContextHandlerFunc, pos ...int) router.ContextHandlerFunc {
-	return func(c router.Context) peer.Response {
-		iArgs := c.GetArgs()
-		if len(iArgs) > 1 && iArgs[payloadPos] != nil {
-			if len(iArgs) == 2 {
-				c.Logger().Sugar().Error(ErrSignatureNotFound)
-				return router.ErrorResponse(ErrSignatureNotFound)
-			} else {
-				if err := verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[sigPos]); err != nil {
-					return router.ErrorResponse(err)
-				}
-			}
-		}
-		return next(c)
-	}
-}
 
 // middleware for checking signature that is got in envelop
 func Verify() router.MiddlewareFunc {
