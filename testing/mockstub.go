@@ -433,6 +433,12 @@ func (stub *MockStub) WithTransient(transient map[string][]byte) *MockStub {
 	return stub
 }
 
+// WithChannel sets channel id
+func (stub *MockStub) WithChannel(channelID string) *MockStub {
+	stub.MockStub.ChannelID = channelID
+	return stub
+}
+
 // AddTransient adds key-value pairs to transient map
 func (stub *MockStub) AddTransient(transient map[string][]byte) *MockStub {
 	if stub.transient == nil {
