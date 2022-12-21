@@ -2,6 +2,7 @@ package erc20_utxo
 
 import (
 	"errors"
+	"math/big"
 
 	"github.com/hyperledger-labs/cckit/examples/erc20_utxo/service/allowance"
 	"github.com/hyperledger-labs/cckit/examples/erc20_utxo/service/config"
@@ -15,7 +16,7 @@ var (
 		Name:        `SomeToken`,
 		Symbol:      `@`,
 		Decimals:    2,
-		TotalSupply: `10000000`,
+		TotalSupply: token.NewBigInt(big.NewInt(10000000)),
 	}
 )
 

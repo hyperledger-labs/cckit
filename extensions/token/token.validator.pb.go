@@ -31,6 +31,11 @@ func (this *CreateTokenTypeRequest) Validate() error {
 	if _, ok := TokenGroupType_name[int32(this.GroupType)]; !ok {
 		return github_com_mwitkow_go_proto_validators.FieldError("GroupType", fmt.Errorf(`value '%v' must be a valid TokenGroupType field`, this.GroupType))
 	}
+	if this.TotalSupply != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TotalSupply); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TotalSupply", err)
+		}
+	}
 	for _, item := range this.Meta {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -66,6 +71,11 @@ func (this *CreateTokenGroupRequest) Validate() error {
 	if this.Name == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
 	}
+	if this.TotalSupply != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TotalSupply); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TotalSupply", err)
+		}
+	}
 	for _, item := range this.Meta {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -93,6 +103,11 @@ func (this *TokenTypeId) Validate() error {
 	return nil
 }
 func (this *TokenType) Validate() error {
+	if this.TotalSupply != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TotalSupply); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TotalSupply", err)
+		}
+	}
 	for _, item := range this.Meta {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -116,6 +131,11 @@ func (this *TokenGroupId) Validate() error {
 	return nil
 }
 func (this *TokenGroup) Validate() error {
+	if this.TotalSupply != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TotalSupply); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TotalSupply", err)
+		}
+	}
 	for _, item := range this.Meta {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

@@ -171,7 +171,7 @@ func (s *TokenService) CreateTokenGroup(ctx router.Context, req *CreateTokenGrou
 		Symbol:      req.Symbol,
 		Group:       req.Group,
 		Name:        req.Name,
-		TotalSupply: ``,
+		TotalSupply: nil,
 	}
 
 	for _, m := range req.Meta {

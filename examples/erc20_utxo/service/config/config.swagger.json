@@ -134,7 +134,7 @@
       "type": "object",
       "properties": {
         "total_supply": {
-          "type": "string"
+          "$ref": "#/definitions/tokenBigInt"
         }
       }
     },
@@ -168,6 +168,14 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "tokenBigInt": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string"
         }
       }
     }

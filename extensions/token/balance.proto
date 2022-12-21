@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/hyperledger-labs/cckit/extensions/token";
 
-package extensions.token;
+package cckit.extensions.token;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";

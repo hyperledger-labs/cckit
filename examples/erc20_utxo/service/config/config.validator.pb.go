@@ -6,6 +6,8 @@ package config
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/hyperledger-labs/cckit/extensions/token"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	_ "google.golang.org/protobuf/types/known/emptypb"
 	math "math"
@@ -26,5 +28,10 @@ func (this *DecimalsResponse) Validate() error {
 	return nil
 }
 func (this *TotalSupplyResponse) Validate() error {
+	if this.TotalSupply != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TotalSupply); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TotalSupply", err)
+		}
+	}
 	return nil
 }
