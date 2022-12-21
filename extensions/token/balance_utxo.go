@@ -45,7 +45,7 @@ func (u *UTXOStore) Get(ctx router.Context, balanceId *BalanceId) (*Balance, err
 
 	amount := big.NewInt(0)
 	for _, u := range outputs {
-		uAmount, err := IntVal(u.Amount)
+		uAmount, err := u.Amount.BigInt()
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func (u *UTXOStore) Get(ctx router.Context, balanceId *BalanceId) (*Balance, err
 		Address: balanceId.Address,
 		Symbol:  balanceId.Symbol,
 		Group:   balanceId.Group,
-		Amount:  amount.String(),
+		Amount:  NewBigInt(amount),
 	}
 
 	return balance, nil
@@ -77,7 +77,7 @@ func (u *UTXOStore) GetLocked(ctx router.Context, balanceId *BalanceId) (*Balanc
 	amount := big.NewInt(0)
 	for _, u := range outputs {
 		if u.Locked {
-			uAmount, err := IntVal(u.Amount)
+			uAmount, err := u.Amount.BigInt()
 			if err != nil {
 				return nil, err
 			}
@@ -92,7 +92,7 @@ func (u *UTXOStore) GetLocked(ctx router.Context, balanceId *BalanceId) (*Balanc
 		Symbol:  balanceId.Symbol,
 		Group:   balanceId.Group,
 		Address: balanceId.Address,
-		Amount:  amount.String(),
+		Amount:  NewBigInt(amount),
 	}
 
 	return balance, nil
@@ -126,7 +126,7 @@ func (u *UTXOStore) Transfer(ctx router.Context, transfer *TransferOperation) er
 		return err
 	}
 
-	transferAmount, err := IntVal(transfer.Amount)
+	transferAmount, err := transfer.Amount.BigInt()
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (u *UTXOStore) Transfer(ctx router.Context, transfer *TransferOperation) er
 			Group:   strings.Join(transfer.Group, `,`),
 			Address: transfer.Sender,
 			TxId:    txID,
-			Amount:  amount.String(),
+			Amount:  NewBigInt(amount),
 			Locked:  false,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
@@ -214,7 +214,7 @@ func (u *UTXOStore) TransferBatch(ctx router.Context, transfers []*TransferOpera
 			return ErrRecipientDuplicate
 		}
 		recipients[transfer.Recipient] = nil
-		transferAmount, err := IntVal(transfer.Amount)
+		transferAmount, err := transfer.Amount.BigInt()
 		if err != nil {
 			return err
 		}
@@ -266,7 +266,7 @@ func (u *UTXOStore) TransferBatch(ctx router.Context, transfers []*TransferOpera
 			Group:   strings.Join(group, `,`),
 			Address: sender,
 			TxId:    txID,
-			Amount:  amount.String(),
+			Amount:  NewBigInt(amount),
 			Locked:  false,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
@@ -303,7 +303,7 @@ func (u *UTXOStore) Lock(ctx router.Context, op *BalanceOperation) (*LockId, err
 		return nil, err
 	}
 
-	opAmount, err := IntVal(op.Amount)
+	opAmount, err := op.Amount.BigInt()
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +339,7 @@ func (u *UTXOStore) Lock(ctx router.Context, op *BalanceOperation) (*LockId, err
 			Group:   strings.Join(op.Group, `,`),
 			Address: op.Address,
 			TxId:    ctx.Stub().GetTxID() + ".1",
-			Amount:  changeAmount.String(),
+			Amount:  NewBigInt(changeAmount),
 			Locked:  false,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
@@ -443,7 +443,7 @@ func selectOutputsForAmount(outputs []*UTXO, amount *big.Int, locked bool) ([]*U
 	for _, o := range outputs {
 		if (!locked && !o.Locked) || (locked && o.Locked) {
 			selectedOutputs = append(selectedOutputs, o)
-			oAmount, err := IntVal(o.Amount)
+			oAmount, err := o.Amount.BigInt()
 			if err != nil {
 				return nil, new(big.Int), err
 			}
@@ -482,7 +482,7 @@ func burn(ctx router.Context, burn *BalanceOperation, locked bool) error {
 		return err
 	}
 
-	burnAmount, err := IntVal(burn.Amount)
+	burnAmount, err := burn.Amount.BigInt()
 	if err != nil {
 		return err
 	}
@@ -504,7 +504,7 @@ func burn(ctx router.Context, burn *BalanceOperation, locked bool) error {
 			Group:   strings.Join(burn.Group, `,`),
 			Address: burn.Address,
 			TxId:    ctx.Stub().GetTxID(),
-			Amount:  changeAmount.String(),
+			Amount:  NewBigInt(changeAmount),
 			Locked:  locked,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
@@ -561,7 +561,7 @@ func setLock(ctx router.Context, op *BalanceOperation, locked bool) error {
 			Symbol:  op.Symbol,
 			Group:   strings.Join(op.Group, `,`),
 			TxId:    ctx.Stub().GetTxID(),
-			Amount:  changeAmount.String(),
+			Amount:  changeNewBigInt(amount)
 			Locked:  !locked,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {

@@ -18,6 +18,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *BigInt) Validate() error {
+	return nil
+}
 func (this *TransferRequest) Validate() error {
 	if this.Recipient == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Recipient", fmt.Errorf(`value '%v' must not be an empty string`, this.Recipient))
@@ -25,8 +28,10 @@ func (this *TransferRequest) Validate() error {
 	if this.Symbol == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Symbol", fmt.Errorf(`value '%v' must not be an empty string`, this.Symbol))
 	}
-	if this.Amount == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Amount", fmt.Errorf(`value '%v' must not be an empty string`, this.Amount))
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
 	}
 	for _, item := range this.Meta {
 		if item != nil {
@@ -38,6 +43,11 @@ func (this *TransferRequest) Validate() error {
 	return nil
 }
 func (this *TransferResponse) Validate() error {
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
+	}
 	for _, item := range this.Meta {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -74,6 +84,11 @@ func (this *BalanceId) Validate() error {
 	return nil
 }
 func (this *Balance) Validate() error {
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
+	}
 	return nil
 }
 func (this *Balances) Validate() error {
@@ -87,6 +102,11 @@ func (this *Balances) Validate() error {
 	return nil
 }
 func (this *Operation) Validate() error {
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
+	}
 	return nil
 }
 func (this *TransferOperation) Validate() error {
@@ -99,8 +119,10 @@ func (this *TransferOperation) Validate() error {
 	if this.Symbol == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Symbol", fmt.Errorf(`value '%v' must not be an empty string`, this.Symbol))
 	}
-	if this.Amount == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Amount", fmt.Errorf(`value '%v' must not be an empty string`, this.Amount))
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
 	}
 	for _, item := range this.Meta {
 		if item != nil {
@@ -118,8 +140,10 @@ func (this *BalanceOperation) Validate() error {
 	if this.Symbol == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Symbol", fmt.Errorf(`value '%v' must not be an empty string`, this.Symbol))
 	}
-	if this.Amount == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Amount", fmt.Errorf(`value '%v' must not be an empty string`, this.Amount))
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
 	}
 	for _, item := range this.Meta {
 		if item != nil {
@@ -131,6 +155,11 @@ func (this *BalanceOperation) Validate() error {
 	return nil
 }
 func (this *Transferred) Validate() error {
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
+	}
 	for _, item := range this.Meta {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -166,6 +195,11 @@ func (this *UTXOId) Validate() error {
 	return nil
 }
 func (this *UTXO) Validate() error {
+	if this.Amount != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Amount); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Amount", err)
+		}
+	}
 	for _, item := range this.Meta {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

@@ -236,7 +236,7 @@
           "title": "account address"
         },
         "amount": {
-          "type": "string",
+          "$ref": "#/definitions/tokenBigInt",
           "title": "Balance amount"
         }
       },
@@ -253,6 +253,14 @@
         }
       },
       "title": "List: balances"
+    },
+    "tokenBigInt": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string"
+        }
+      }
     },
     "tokenMeta": {
       "type": "object",
@@ -303,7 +311,7 @@
           }
         },
         "amount": {
-          "type": "string"
+          "$ref": "#/definitions/tokenBigInt"
         },
         "meta": {
           "type": "array",
@@ -332,7 +340,7 @@
           }
         },
         "amount": {
-          "type": "string"
+          "$ref": "#/definitions/tokenBigInt"
         },
         "meta": {
           "type": "array",

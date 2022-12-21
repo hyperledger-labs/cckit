@@ -30,7 +30,7 @@ func (s *AccountStore) Get(ctx router.Context, id *BalanceId) (*Balance, error) 
 				Address: id.Address,
 				Symbol:  id.Symbol,
 				Group:   id.Group,
-				Amount:  big.NewInt(0).String(),
+				Amount:  NewBigInt(big.NewInt(0)),
 			}, nil
 		}
 		return nil, err
@@ -141,11 +141,20 @@ func (s *AccountStore) add(ctx router.Context, op *BalanceOperation) (*Balance, 
 		return nil, err
 	}
 
+	curBalanceAmount, err := balance.Amount.BigInt()
+	if err != nil {
+		return nil, fmt.Errorf(`parse cur balance: %w`, err)
+	}
+
+	toAdd, err := op.Amount.BigInt()
+	if err != nil {
+		return nil, fmt.Errorf(`parse amnount to add: %w`, err)
+	}
 	newBalance := &Balance{
 		Address: op.Address,
 		Symbol:  op.Symbol,
 		Group:   op.Group,
-		Amount:  balance.Amount + op.Amount,
+		Amount:  NewBigIntSum(curBalanceAmount, toAdd),
 	}
 
 	if err = State(ctx).Put(newBalance); err != nil {
@@ -160,23 +169,23 @@ func (s *AccountStore) sub(ctx router.Context, op *BalanceOperation) (*Balance, 
 		return nil, err
 	}
 
-	if balance.Amount < op.Amount {
-		return nil, fmt.Errorf(`subtract from=%s: %w`, op.Address, ErrAmountInsuficcient)
+	balAmount, err := balance.Amount.BigInt()
+	if err != nil {
+		return nil, err
+	}
+	opAmount, err := op.Amount.BigInt()
+	if err != nil {
+		return nil, err
 	}
 
-	balAmount, err := IntVal(balance.Amount)
-	if err != nil {
-		return nil, err
-	}
-	opAmount, err := IntVal(op.Amount)
-	if err != nil {
-		return nil, err
+	if balAmount.Cmp(opAmount) == -1 {
+		return nil, fmt.Errorf(`subtract from=%s: %w`, op.Address, ErrAmountInsuficcient)
 	}
 	newBalance := &Balance{
 		Address: op.Address,
 		Symbol:  op.Symbol,
 		Group:   op.Group,
-		Amount:  balAmount.Sub(balAmount, opAmount).String(),
+		Amount:  NewBigIntSub(balAmount, opAmount),
 	}
 
 	if err = State(ctx).Put(newBalance); err != nil {
