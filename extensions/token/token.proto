@@ -8,6 +8,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "mwitkow/go-proto-validators/validator.proto";
 
+import "token/balance.proto";
 
 service TokenService {
 
@@ -99,7 +100,7 @@ message CreateTokenTypeRequest {
   string name = 2 [(validator.field) = {string_not_empty : true}];
   uint32 decimals = 3 [(validator.field) = {int_lt: 9}]; // from 0 to 8
   TokenGroupType group_type = 4 [(validator.field) = {is_in_enum : true}];;
-  string total_supply = 5; // big.Int
+  cckit.extensions.token.BigInt  total_supply = 5; // big.Int
   repeated TokenMetaRequest meta = 6;
 }
 
@@ -114,7 +115,7 @@ message CreateTokenGroupRequest {
   string symbol = 1 [(validator.field) = {string_not_empty : true}];
   repeated string group = 2 [(validator.field) = {repeated_count_min : 1}];
   string name = 3 [(validator.field) = {string_not_empty : true}];
-  string total_supply = 4; // big.Int
+  cckit.extensions.token.BigInt total_supply = 4; // big.Int
   repeated TokenMetaRequest meta = 5;
 }
 
@@ -139,7 +140,7 @@ message TokenType {
   string symbol = 1;
   string name = 2;
   uint32 decimals = 3;
-  string total_supply = 4;
+  cckit.extensions.token.BigInt total_supply = 4;
   TokenGroupType group_type = 5;
   repeated TokenMeta meta = 6;
 }
@@ -158,7 +159,7 @@ message TokenGroup {
   string symbol = 1;
   repeated string group = 2;
   string name = 3;
-  string total_supply = 4;
+  cckit.extensions.token.BigInt total_supply = 4;
   repeated TokenMeta meta = 5;
 }
 

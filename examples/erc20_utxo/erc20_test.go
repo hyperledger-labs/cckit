@@ -2,6 +2,7 @@ package erc20_utxo_test
 
 import (
 	"encoding/base64"
+	"math/big"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -97,13 +98,13 @@ var _ = Describe(`ERC`, func() {
 						&token.BalanceId{Address: user1Address, Symbol: erc20_utxo.Token.Symbol}),
 				&token.Balance{}).(*token.Balance)
 
-			Expect(b.Amount).To(Equal(`0`))
+			Expect(b.Amount).To(Equal(token.NewBigInt(big.NewInt(0))))
 		})
 
 	})
 
 	Context(`transfer`, func() {
-		var transferAmount = `100`
+		var transferAmount = token.NewBigInt(big.NewInt(100))
 
 		It(`Disallow to transfer balance by user with zero balance`, func() {
 			expectcc.ResponseError(
@@ -149,7 +150,7 @@ var _ = Describe(`ERC`, func() {
 
 	Context(`Allowance`, func() {
 
-		var allowAmount = `50`
+		var allowAmount = token.NewBigInt(big.NewInt(50))
 
 		It(`Allow to approve amount by owner for spender even if balance is zero`, func() {
 			a := expectcc.PayloadIs(

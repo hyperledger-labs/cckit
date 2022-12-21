@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/hyperledger-labs/cckit/extensions/token";
 
-package extensions.token;
+package cckit.extensions.token;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
@@ -41,11 +41,15 @@ service BalanceService {
   }
 }
 
+message BigInt {
+  string data = 1;
+}
+
 message TransferRequest  {
   string recipient = 1 [(validator.field) = {string_not_empty : true}];
   string symbol = 2 [(validator.field) = {string_not_empty : true}];
   repeated string group = 3;
-  string amount = 4 [(validator.field) = {string_not_empty : true}];
+  BigInt amount = 4 [(validator.field) = {string_not_empty : true}];
   repeated AddMetaRequest meta = 5;
 }
 
@@ -54,7 +58,7 @@ message TransferResponse {
   string recipient = 2;
   string symbol = 3;
   repeated string group = 4;
-  string amount = 5;
+  BigInt amount = 5;
   repeated Meta meta = 6;
 }
 
@@ -83,7 +87,7 @@ message Balance {
   // account address
   string address = 3;
   // Balance amount
-  string amount = 4;
+  BigInt amount = 4;
 }
 
 // List: balances
@@ -104,7 +108,7 @@ message Operation {
   string recipient = 2;
   string symbol = 3;
   repeated string group = 4;
-  string amount = 5;
+  BigInt amount = 5;
   OperationType type = 6;
 }
 
@@ -113,7 +117,7 @@ message TransferOperation  {
   string recipient = 2 [(validator.field) = {string_not_empty : true}];
   string symbol = 3 [(validator.field) = {string_not_empty : true}];
   repeated string group = 4;
-  string amount = 5 [(validator.field) = {string_not_empty : true}];
+  BigInt amount = 5 [(validator.field) = {string_not_empty : true}];
   repeated AddMetaRequest meta = 6;
 }
 
@@ -121,7 +125,7 @@ message BalanceOperation  {
   string address = 1 [(validator.field) = {string_not_empty : true}];
   string symbol = 2 [(validator.field) = {string_not_empty : true}];
   repeated string group = 3;
-  string amount = 4 [(validator.field) = {string_not_empty : true}];
+  BigInt amount = 4 [(validator.field) = {string_not_empty : true}];
   repeated AddMetaRequest meta = 5;
 }
 
@@ -131,7 +135,7 @@ message Transferred  {
   string recipient = 2;
   string symbol = 3;
   repeated string group = 4;
-  string amount = 5;
+  BigInt amount = 5;
   repeated Meta meta = 6;
 }
 
@@ -164,7 +168,7 @@ message UTXO {
   string group = 2; // Token groups, joined
   string address = 3; // account address
   string tx_id = 4; // Transaction Id
-  string amount = 6; // amount
+  BigInt amount = 6; // amount
   bool locked = 7;
   repeated Meta meta = 8; // meta
 }

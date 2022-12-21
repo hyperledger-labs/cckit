@@ -2,7 +2,6 @@ package token_test
 
 import (
 	"encoding/base64"
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -63,32 +62,32 @@ func NewWallet(cc *testcc.TxHandler, ctx router.Context, store *token.UTXOStore,
 	}
 }
 
-func (w *Wallet) ExpectBalance(amount string) {
+func (w *Wallet) ExpectBalance(amount *big.Int) {
 	b, err := w.store.Get(w.ctx, &token.BalanceId{
 		Address: w.address,
 		Symbol:  w.symbol,
 	})
 	Expect(err).NotTo(HaveOccurred())
-	Expect(b.Amount).To(Equal(amount))
+	Expect(b.Amount).To(Equal(token.NewBigInt(amount)))
 }
 
-func (w *Wallet) ExpectMint(amount string) {
+func (w *Wallet) ExpectMint(amount *big.Int) {
 	w.cc.Tx(func() {
 		err := w.store.Mint(w.ctx, &token.BalanceOperation{
 			Address: w.address,
 			Symbol:  w.symbol,
-			Amount:  amount,
+			Amount:  token.NewBigInt(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
 
-func (w *Wallet) ExpectBurn(amount string) {
+func (w *Wallet) ExpectBurn(amount *big.Int) {
 	w.cc.Tx(func() {
 		err := w.store.Burn(w.ctx, &token.BalanceOperation{
 			Address: w.address,
 			Symbol:  w.symbol,
-			Amount:  amount,
+			Amount:  token.NewBigInt(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -115,13 +114,13 @@ func (w *Wallet) ExpectLockAll() {
 	})
 }
 
-func (w *Wallet) ExpectTransfer(recipient string, amount string) {
+func (w *Wallet) ExpectTransfer(recipient string, amount *big.Int) {
 	w.cc.Tx(func() {
 		err := w.store.Transfer(w.ctx, &token.TransferOperation{
 			Sender:    w.address,
 			Recipient: recipient,
 			Symbol:    w.symbol,
-			Amount:    amount,
+			Amount:    token.NewBigInt(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -136,24 +135,24 @@ func (w *Wallet) ExpectTransferLock(recipient string, amount string) {
 	})
 }
 
-func (w *Wallet) ExpectNotTransfer(recipient string, amount string) {
+func (w *Wallet) ExpectNotTransfer(recipient string, amount *big.Int) {
 	w.cc.Tx(func() {
 		err := w.store.Transfer(w.ctx, &token.TransferOperation{
 			Sender:    w.address,
 			Recipient: recipient,
 			Symbol:    w.symbol,
-			Amount:    amount,
+			Amount:    token.NewBigInt(amount),
 		})
 		Expect(err).To(HaveOccurred())
 	})
 }
 
-func (w *Wallet) ExpectLock(amount string) {
+func (w *Wallet) ExpectLock(amount *big.Int) {
 	w.cc.Tx(func() {
 		lockId, err := w.store.Lock(w.ctx, &token.BalanceOperation{
 			Address: w.address,
 			Symbol:  w.symbol,
-			Amount:  amount,
+			Amount:  token.NewBigInt(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(lockId.Address).To(Equal(w.address))
@@ -170,19 +169,19 @@ func (w *Wallet) ExpectUnlock() {
 	})
 }
 
-func (w *Wallet) ExpectLockedBalance(amount string) {
+func (w *Wallet) ExpectLockedBalance(amount *big.Int) {
 	b, err := w.store.GetLocked(w.ctx, &token.BalanceId{
 		Symbol:  w.symbol,
 		Address: w.address,
 	})
 
 	Expect(err).NotTo(HaveOccurred())
-	Expect(b.Amount).To(Equal(amount))
+	Expect(b.Amount).To(Equal(token.NewBigInt(amount)))
 }
 
 type transfer struct {
 	recipient string
-	amount    string
+	amount    *big.Int
 }
 
 func (w *Wallet) ExpectTransferBatch(transfers []*transfer) {
@@ -194,7 +193,7 @@ func (w *Wallet) ExpectTransferBatch(transfers []*transfer) {
 			Sender:    w.address,
 			Recipient: t.recipient,
 			Symbol:    w.symbol,
-			Amount:    t.amount,
+			Amount:    token.NewBigInt(t.amount),
 		})
 	}
 	w.cc.Tx(func() {
@@ -221,108 +220,104 @@ var _ = Describe(`UTXO store`, func() {
 	user1Wallet := NewWallet(cc, ctx, utxo, user1Address, Symbol)
 	user2Wallet := NewWallet(cc, ctx, utxo, user2Address, Symbol)
 
-	fmt.Println("ownerAddress", ownerAddress)
-	fmt.Println("user1Address", user1Address)
-	fmt.Println("user2Address", user2Address)
-
 	It(`allow to get empty balance`, func() {
-		ownerWallet.ExpectBalance(Int0.String())
+		ownerWallet.ExpectBalance(Int0)
 	})
 
 	It(`allow to mint balance`, func() {
-		ownerWallet.ExpectMint(TotalSupply.String())
-		ownerWallet.ExpectBalance(TotalSupply.String())
+		ownerWallet.ExpectMint(TotalSupply)
+		ownerWallet.ExpectBalance(TotalSupply)
 		ownerWallet.ExpectOutputsNum(1)
 	})
 
 	It(`allow to mint balance once more time`, func() {
-		ownerWallet.ExpectMint(TotalSupply.String())
-		ownerWallet.ExpectBalance(TotalSupplyX2.String())
+		ownerWallet.ExpectMint(TotalSupply)
+		ownerWallet.ExpectBalance(TotalSupplyX2)
 		ownerWallet.ExpectOutputsNum(2)
 	})
 
 	It(`allow to partially transfer balance`, func() {
-		ownerWallet.ExpectTransfer(user1Address, Int100.String())
-		ownerWallet.ExpectBalance(new(big.Int).Sub(TotalSupplyX2, Int100).String())
+		ownerWallet.ExpectTransfer(user1Address, Int100)
+		ownerWallet.ExpectBalance(new(big.Int).Sub(TotalSupplyX2, Int100))
 		ownerWallet.ExpectOutputsNum(2)
 
-		user1Wallet.ExpectBalance(big.NewInt(100).String())
+		user1Wallet.ExpectBalance(big.NewInt(100))
 		user1Wallet.ExpectOutputsNum(1)
 	})
 
 	It(`allow to return all amount back`, func() {
-		user1Wallet.ExpectTransfer(ownerAddress, Int100.String())
-		ownerWallet.ExpectBalance(TotalSupplyX2.String())
+		user1Wallet.ExpectTransfer(ownerAddress, Int100)
+		ownerWallet.ExpectBalance(TotalSupplyX2)
 		ownerWallet.ExpectOutputsNum(3)
 
-		user1Wallet.ExpectBalance(Int0.String())
+		user1Wallet.ExpectBalance(Int0)
 		user1Wallet.ExpectOutputsNum(0)
 	})
 
 	It(`allow to burn`, func() {
-		ownerWallet.ExpectBurn(TotalSupply.String())
-		ownerWallet.ExpectBalance(TotalSupply.String())
+		ownerWallet.ExpectBurn(TotalSupply)
+		ownerWallet.ExpectBalance(TotalSupply)
 		//ownerWallet.ExpectOutputsNum(2)
 	})
 
 	It(`allow to transfer batch`, func() {
 		ownerWallet.ExpectTransferBatch([]*transfer{
-			{recipient: user1Address, amount: Int100.String()},
-			{recipient: user2Address, amount: Int200.String()},
+			{recipient: user1Address, amount: Int100},
+			{recipient: user2Address, amount: Int200},
 		})
-		ownerWallet.ExpectBalance(new(big.Int).Sub(TotalSupply, Int300).String()) // must be equal TotalSupply - 100 - 200
-		user1Wallet.ExpectBalance(Int100.String())
-		user2Wallet.ExpectBalance(Int200.String())
+		ownerWallet.ExpectBalance(new(big.Int).Sub(TotalSupply, Int300)) // must be equal TotalSupply - 100 - 200
+		user1Wallet.ExpectBalance(Int100)
+		user2Wallet.ExpectBalance(Int200)
 		//ownerWallet.ExpectOutputsNum(2)
 	})
 
 	It(`allow to lock`, func() {
-		user1Wallet.ExpectLock(Int50.String())
-		user1Wallet.ExpectLockedBalance(Int50.String())
+		user1Wallet.ExpectLock(Int50)
+		user1Wallet.ExpectLockedBalance(Int50)
 	})
 
 	It(`disallow to transfer locked balance`, func() {
-		user1Wallet.ExpectNotTransfer(ownerAddress, Int100.String())
+		user1Wallet.ExpectNotTransfer(ownerAddress, Int100)
 	})
 
 	It(`allow to unlock`, func() {
 		user1Wallet.ExpectUnlock()
-		user1Wallet.ExpectBalance(Int100.String())
-		user1Wallet.ExpectLockedBalance(Int0.String())
+		user1Wallet.ExpectBalance(Int100)
+		user1Wallet.ExpectLockedBalance(Int0)
 	})
 
 	It(`allow to burn locked`, func() {
-		user2Wallet.ExpectLock(Int50.String())
+		user2Wallet.ExpectLock(Int50)
 		user2Wallet.ExpectBurnLock()
-		user2Wallet.ExpectLockedBalance(Int0.String())
-		user2Wallet.ExpectBalance(Int150.String())
+		user2Wallet.ExpectLockedBalance(Int0)
+		user2Wallet.ExpectBalance(Int150)
 	})
 
 	It(`allow to burn all locked`, func() {
-		user1Wallet.ExpectLock(Int50.String())
-		user2Wallet.ExpectLock(Int50.String())
+		user1Wallet.ExpectLock(Int50)
+		user2Wallet.ExpectLock(Int50)
 		user2Wallet.ExpectBurnAllLock()
-		user1Wallet.ExpectLockedBalance(Int0.String())
-		user2Wallet.ExpectLockedBalance(Int0.String())
-		user1Wallet.ExpectBalance(Int50.String())
-		user2Wallet.ExpectBalance(Int100.String())
+		user1Wallet.ExpectLockedBalance(Int0)
+		user2Wallet.ExpectLockedBalance(Int0)
+		user1Wallet.ExpectBalance(Int50)
+		user2Wallet.ExpectBalance(Int100)
 	})
 
 	It(`allow to transfer locked token`, func() {
-		ownerWallet.ExpectLock(Int100.String())
+		ownerWallet.ExpectLock(Int100)
 		ownerWallet.ExpectTransferLock(user2Address, Int100.String())
-		ownerWallet.ExpectLockedBalance(Int0.String())
-		user2Wallet.ExpectLockedBalance(Int100.String())
+		ownerWallet.ExpectLockedBalance(Int0)
+		user2Wallet.ExpectLockedBalance(Int100)
 	})
 
 	It(`allow to lock all`, func() {
 		ownerWallet.ExpectLockAll()
-		ownerWallet.ExpectLockedBalance(Int600.String())
-		ownerWallet.ExpectBalance(Int600.String())
-		user1Wallet.ExpectLockedBalance(Int50.String())
-		user1Wallet.ExpectBalance(Int50.String())
-		user2Wallet.ExpectLockedBalance(Int200.String())
-		user2Wallet.ExpectBalance(Int200.String())
+		ownerWallet.ExpectLockedBalance(Int600)
+		ownerWallet.ExpectBalance(Int600)
+		user1Wallet.ExpectLockedBalance(Int50)
+		user1Wallet.ExpectBalance(Int50)
+		user2Wallet.ExpectLockedBalance(Int200)
+		user2Wallet.ExpectBalance(Int200)
 	})
 
 })

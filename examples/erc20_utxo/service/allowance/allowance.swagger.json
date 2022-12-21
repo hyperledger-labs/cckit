@@ -132,7 +132,7 @@
           }
         },
         "amount": {
-          "type": "string"
+          "$ref": "#/definitions/tokenBigInt"
         }
       },
       "title": "State: Allowance"
@@ -156,7 +156,7 @@
           }
         },
         "amount": {
-          "type": "string"
+          "$ref": "#/definitions/tokenBigInt"
         }
       }
     },
@@ -190,6 +190,14 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "tokenBigInt": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string"
         }
       }
     }

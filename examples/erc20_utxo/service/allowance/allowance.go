@@ -3,7 +3,6 @@ package allowance
 import (
 	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/hyperledger-labs/cckit/extensions/account"
 	"github.com/hyperledger-labs/cckit/extensions/token"
@@ -41,7 +40,7 @@ func (s *Service) GetAllowance(ctx router.Context, id *AllowanceId) (*Allowance,
 				Spender: id.Spender,
 				Symbol:  id.Symbol,
 				Group:   id.Group,
-				Amount:  ``,
+				Amount:  nil,
 			}, nil
 		}
 		return nil, fmt.Errorf(`get allowance: %w`, err)
@@ -107,12 +106,12 @@ func (s *Service) TransferFrom(ctx router.Context, req *TransferFromRequest) (*T
 		return nil, err
 	}
 
-	reqAmount, err := token.IntVal(req.Amount)
+	reqAmount, err := req.Amount.BigInt()
 	if err != nil {
 		return nil, fmt.Errorf(`req amount: %w`, err)
 	}
 
-	curAmount, err := token.IntVal(allowance.Amount)
+	curAmount, err := allowance.Amount.BigInt()
 	if err != nil {
 		return nil, fmt.Errorf(`cur amount: %w`, err)
 	}
@@ -121,7 +120,7 @@ func (s *Service) TransferFrom(ctx router.Context, req *TransferFromRequest) (*T
 			req.Amount, allowance.Amount, ErrAllowanceInsufficient)
 	}
 
-	allowance.Amount = new(big.Int).Sub(curAmount, reqAmount).String()
+	allowance.Amount = token.NewBigIntSub(curAmount, reqAmount)
 
 	// sub from allowance
 	if err := State(ctx).Put(allowance); err != nil {
