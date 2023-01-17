@@ -307,7 +307,8 @@ var _ = Describe(`UTXO store`, func() {
 		ownerWallet.ExpectLock(Int100)
 		ownerWallet.ExpectTransferLock(user2Address, Int100.String())
 		ownerWallet.ExpectLockedBalance(Int0)
-		user2Wallet.ExpectLockedBalance(Int100)
+		user2Wallet.ExpectLockedBalance(Int0)
+		user2Wallet.ExpectBalance(Int200)
 	})
 
 	It(`allow to lock all`, func() {
