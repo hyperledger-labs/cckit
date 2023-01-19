@@ -10,13 +10,13 @@ import (
 type BalanceService struct {
 	Account account.Getter
 	Token   TokenGetter
-	Store   Store
+	Store   BalanceStore
 }
 
 func NewBalanceService(
 	accountResolver account.Getter,
 	tokenGetter TokenGetter,
-	store Store) *BalanceService {
+	store BalanceStore) *BalanceService {
 
 	return &BalanceService{
 		Account: accountResolver,

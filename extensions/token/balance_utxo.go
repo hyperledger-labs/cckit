@@ -9,7 +9,7 @@ import (
 	"github.com/hyperledger-labs/cckit/state"
 )
 
-var _ Store = &UTXOStore{}
+var _ BalanceStore = &UTXOStore{}
 
 var (
 	ErrSenderRecipientEqual = errors.New(`sender recipient equal`)

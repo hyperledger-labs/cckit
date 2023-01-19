@@ -12,7 +12,7 @@ type (
 		TxId    string
 	}
 
-	Store interface {
+	BalanceStore interface {
 		Get(router.Context, *BalanceId) (*Balance, error)
 		GetLocked(router.Context, *BalanceId) (*Balance, error)
 		List(router.Context, *TokenId) ([]*Balance, error)

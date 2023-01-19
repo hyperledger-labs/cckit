@@ -16,11 +16,11 @@ var (
 )
 
 type Service struct {
-	balance token.Store
+	balance token.BalanceStore
 	account account.Getter
 }
 
-func NewService(account account.Getter, balance token.Store) *Service {
+func NewService(account account.Getter, balance token.BalanceStore) *Service {
 	return &Service{
 		account: account,
 		balance: balance,
