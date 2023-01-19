@@ -9,7 +9,7 @@ import (
 	"github.com/hyperledger-labs/cckit/state"
 )
 
-var _ Store = &AccountStore{}
+var _ BalanceStore = &AccountStore{}
 
 type AccountStore struct {
 }
