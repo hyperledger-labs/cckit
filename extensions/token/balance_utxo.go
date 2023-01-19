@@ -410,6 +410,7 @@ func (u *UTXOStore) TransferLock(ctx router.Context, id *LockId, transfer *Trans
 	}
 
 	transferLockedOutput.Address = transfer.Recipient
+	transferLockedOutput.Locked = false // unlock token
 	if err := State(ctx).Put(transferLockedOutput); err != nil {
 		return err
 	}
