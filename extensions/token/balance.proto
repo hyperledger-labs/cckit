@@ -41,15 +41,16 @@ service BalanceService {
   }
 }
 
-message BigInt {
-  string data = 1;
+message Decimal  {
+  int32  scale = 1; // scale ( same as decimal in ERC-20 )
+  string value = 2; // big.Int as string
 }
 
 message TransferRequest  {
   string recipient = 1 [(validator.field) = {string_not_empty : true}];
   string symbol = 2 [(validator.field) = {string_not_empty : true}];
   repeated string group = 3;
-  BigInt amount = 4 [(validator.field) = {string_not_empty : true}];
+  Decimal  amount = 4 [(validator.field) = {string_not_empty : true}];
   repeated AddMetaRequest meta = 5;
 }
 
@@ -58,7 +59,7 @@ message TransferResponse {
   string recipient = 2;
   string symbol = 3;
   repeated string group = 4;
-  BigInt amount = 5;
+  Decimal amount = 5;
   repeated Meta meta = 6;
 }
 
@@ -87,7 +88,7 @@ message Balance {
   // account address
   string address = 3;
   // Balance amount
-  BigInt amount = 4;
+  Decimal amount = 4;
 }
 
 // List: balances
@@ -108,7 +109,7 @@ message Operation {
   string recipient = 2;
   string symbol = 3;
   repeated string group = 4;
-  BigInt amount = 5;
+  Decimal amount = 5;
   OperationType type = 6;
 }
 
@@ -117,7 +118,7 @@ message TransferOperation  {
   string recipient = 2 [(validator.field) = {string_not_empty : true}];
   string symbol = 3 [(validator.field) = {string_not_empty : true}];
   repeated string group = 4;
-  BigInt amount = 5 [(validator.field) = {string_not_empty : true}];
+  Decimal amount = 5 [(validator.field) = {string_not_empty : true}];
   repeated AddMetaRequest meta = 6;
 }
 
@@ -125,7 +126,7 @@ message BalanceOperation  {
   string address = 1 [(validator.field) = {string_not_empty : true}];
   string symbol = 2 [(validator.field) = {string_not_empty : true}];
   repeated string group = 3;
-  BigInt amount = 4 [(validator.field) = {string_not_empty : true}];
+  Decimal amount = 4 [(validator.field) = {string_not_empty : true}];
   repeated AddMetaRequest meta = 5;
 }
 
@@ -135,7 +136,7 @@ message Transferred  {
   string recipient = 2;
   string symbol = 3;
   repeated string group = 4;
-  BigInt amount = 5;
+  Decimal amount = 5;
   repeated Meta meta = 6;
 }
 
@@ -168,7 +169,7 @@ message UTXO {
   string group = 2; // Token groups, joined
   string address = 3; // account address
   string tx_id = 4; // Transaction Id
-  BigInt amount = 6; // amount
+  Decimal amount = 6; // amount
   bool locked = 7;
   repeated Meta meta = 8; // meta
 }

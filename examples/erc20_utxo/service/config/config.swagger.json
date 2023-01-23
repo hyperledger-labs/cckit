@@ -134,7 +134,7 @@
       "type": "object",
       "properties": {
         "total_supply": {
-          "$ref": "#/definitions/tokenBigInt"
+          "$ref": "#/definitions/tokenDecimal"
         }
       }
     },
@@ -171,10 +171,14 @@
         }
       }
     },
-    "tokenBigInt": {
+    "tokenDecimal": {
       "type": "object",
       "properties": {
-        "data": {
+        "scale": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "value": {
           "type": "string"
         }
       }
