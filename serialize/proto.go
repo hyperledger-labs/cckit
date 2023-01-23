@@ -19,6 +19,7 @@ type (
 	}
 
 	JSONProtoSerializer struct {
+		UseProtoNames bool // to use proto field name instead of lowerCamelCase name in JSON field names
 	}
 )
 
@@ -31,7 +32,8 @@ func (ps *BinaryProtoSerializer) FromBytes(serialized []byte, target proto.Messa
 }
 
 func (js *JSONProtoSerializer) ToBytes(entry proto.Message) ([]byte, error) {
-	return JSONProtoMarshal(entry)
+	mo := &protojson.MarshalOptions{UseProtoNames: js.UseProtoNames}
+	return JSONProtoMarshal(entry, mo)
 }
 
 func (js *JSONProtoSerializer) FromBytes(serialized []byte, target proto.Message) (proto.Message, error) {
@@ -42,8 +44,10 @@ func BinaryProtoMarshal(entry proto.Message) ([]byte, error) {
 	return proto.Marshal(proto.Clone(entry))
 }
 
-func JSONProtoMarshal(entry proto.Message) ([]byte, error) {
-	return protojson.Marshal(proto.Clone(entry))
+func JSONProtoMarshal(entry proto.Message, mo *protojson.MarshalOptions) ([]byte, error) {
+	// return protojson.Marshal(proto.Clone(entry))
+	// mo := protojson.MarshalOptions{UseProtoNames: true}
+	return mo.Marshal(proto.Clone(entry))
 }
 
 // BinaryProtoUnmarshal r unmarshalls []byte as proto.Message to pointer, and returns value pointed to
