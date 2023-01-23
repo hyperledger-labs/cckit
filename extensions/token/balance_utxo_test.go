@@ -68,7 +68,7 @@ func (w *Wallet) ExpectBalance(amount *big.Int) {
 		Symbol:  w.symbol,
 	})
 	Expect(err).NotTo(HaveOccurred())
-	Expect(b.Amount).To(Equal(token.NewBigInt(amount)))
+	Expect(b.Amount).To(Equal(token.NewDecimal(amount)))
 }
 
 func (w *Wallet) ExpectMint(amount *big.Int) {
@@ -76,7 +76,7 @@ func (w *Wallet) ExpectMint(amount *big.Int) {
 		err := w.store.Mint(w.ctx, &token.BalanceOperation{
 			Address: w.address,
 			Symbol:  w.symbol,
-			Amount:  token.NewBigInt(amount),
+			Amount:  token.NewDecimal(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -87,7 +87,7 @@ func (w *Wallet) ExpectBurn(amount *big.Int) {
 		err := w.store.Burn(w.ctx, &token.BalanceOperation{
 			Address: w.address,
 			Symbol:  w.symbol,
-			Amount:  token.NewBigInt(amount),
+			Amount:  token.NewDecimal(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -120,7 +120,7 @@ func (w *Wallet) ExpectTransfer(recipient string, amount *big.Int) {
 			Sender:    w.address,
 			Recipient: recipient,
 			Symbol:    w.symbol,
-			Amount:    token.NewBigInt(amount),
+			Amount:    token.NewDecimal(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -141,7 +141,7 @@ func (w *Wallet) ExpectNotTransfer(recipient string, amount *big.Int) {
 			Sender:    w.address,
 			Recipient: recipient,
 			Symbol:    w.symbol,
-			Amount:    token.NewBigInt(amount),
+			Amount:    token.NewDecimal(amount),
 		})
 		Expect(err).To(HaveOccurred())
 	})
@@ -152,7 +152,7 @@ func (w *Wallet) ExpectLock(amount *big.Int) {
 		lockId, err := w.store.Lock(w.ctx, &token.BalanceOperation{
 			Address: w.address,
 			Symbol:  w.symbol,
-			Amount:  token.NewBigInt(amount),
+			Amount:  token.NewDecimal(amount),
 		})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(lockId.Address).To(Equal(w.address))
@@ -176,7 +176,7 @@ func (w *Wallet) ExpectLockedBalance(amount *big.Int) {
 	})
 
 	Expect(err).NotTo(HaveOccurred())
-	Expect(b.Amount).To(Equal(token.NewBigInt(amount)))
+	Expect(b.Amount).To(Equal(token.NewDecimal(amount)))
 }
 
 type transfer struct {
@@ -193,7 +193,7 @@ func (w *Wallet) ExpectTransferBatch(transfers []*transfer) {
 			Sender:    w.address,
 			Recipient: t.recipient,
 			Symbol:    w.symbol,
-			Amount:    token.NewBigInt(t.amount),
+			Amount:    token.NewDecimal(t.amount),
 		})
 	}
 	w.cc.Tx(func() {
