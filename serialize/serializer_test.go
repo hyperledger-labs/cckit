@@ -6,10 +6,10 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/serialize/testdata"

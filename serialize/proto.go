@@ -45,8 +45,6 @@ func BinaryProtoMarshal(entry proto.Message) ([]byte, error) {
 }
 
 func JSONProtoMarshal(entry proto.Message, mo *protojson.MarshalOptions) ([]byte, error) {
-	// return protojson.Marshal(proto.Clone(entry))
-	// mo := protojson.MarshalOptions{UseProtoNames: true}
 	return mo.Marshal(proto.Clone(entry))
 }
 
