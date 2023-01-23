@@ -6,7 +6,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
+	// "github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 // fromBytes converts []byte to target interface

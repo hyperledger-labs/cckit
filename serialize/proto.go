@@ -1,13 +1,12 @@
 package serialize
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
+
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type (
@@ -44,7 +43,7 @@ func BinaryProtoMarshal(entry proto.Message) ([]byte, error) {
 }
 
 func JSONProtoMarshal(entry proto.Message) ([]byte, error) {
-	return json.Marshal(proto.Clone(entry))
+	return protojson.Marshal(proto.Clone(entry))
 }
 
 // BinaryProtoUnmarshal r unmarshalls []byte as proto.Message to pointer, and returns value pointed to
@@ -59,7 +58,8 @@ func BinaryProtoUnmarshal(bb []byte, messageType proto.Message) (message proto.M
 
 func JSONProtoUnmarshal(json []byte, messageType proto.Message) (message proto.Message, err error) {
 	msg := proto.Clone(messageType)
-	err = jsonpb.Unmarshal(bytes.NewReader(json), msg)
+	err = protojson.Unmarshal(json, msg)
+
 	if err != nil {
 		return nil, fmt.Errorf(`json proto unmarshal: %w`, err)
 	}
