@@ -54,5 +54,5 @@ message DecimalsResponse {
 }
 
 message TotalSupplyResponse {
-  cckit.extensions.token.BigInt total_supply = 1;
+  cckit.extensions.token.Decimal total_supply = 1;
 }

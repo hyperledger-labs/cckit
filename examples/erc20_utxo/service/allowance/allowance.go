@@ -120,7 +120,7 @@ func (s *Service) TransferFrom(ctx router.Context, req *TransferFromRequest) (*T
 			req.Amount, allowance.Amount, ErrAllowanceInsufficient)
 	}
 
-	allowance.Amount = token.NewBigIntSub(curAmount, reqAmount)
+	allowance.Amount = token.BigIntSubAsDecimal(curAmount, reqAmount)
 
 	// sub from allowance
 	if err := State(ctx).Put(allowance); err != nil {

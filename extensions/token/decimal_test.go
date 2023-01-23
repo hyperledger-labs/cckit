@@ -14,13 +14,12 @@ var (
 		Group:   "b",
 		Address: "c",
 		TxId:    "d",
-		Amount: &token.BigInt{
-			Data: `12345`,
+		Amount: &token.Decimal{
+			Value: `12345`,
 		},
 	}
 
-	utxo1JSON               = []byte(`{"symbol":"a","group":"b","address":"c","tx_id":"d","amount":"12345"}`)
-	utxo1JSON_WithBigIntObj = []byte(`{"symbol":"a","group":"b","address":"c","tx_id":"d","amount": { "data" : "12345" }}`)
+	utxo1JSON = []byte(`{"symbol":"a","group":"b","address":"c","tx_id":"d","amount":{"value":"12345"}}`)
 )
 var _ = Describe(`Bigint`, func() {
 
@@ -40,7 +39,7 @@ var _ = Describe(`Bigint`, func() {
 	})
 
 	It(`allow to deserialize from json (full version)`, func() {
-		obj, err := serialize.PreferJSONSerializer.FromBytesTo(utxo1JSON_WithBigIntObj, &token.UTXO{})
+		obj, err := serialize.PreferJSONSerializer.FromBytesTo(utxo1JSON, &token.UTXO{})
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(obj.(*token.UTXO).String()).To(Equal(utxo1.String()))

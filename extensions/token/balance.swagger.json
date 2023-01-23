@@ -236,7 +236,7 @@
           "title": "account address"
         },
         "amount": {
-          "$ref": "#/definitions/tokenBigInt",
+          "$ref": "#/definitions/tokenDecimal",
           "title": "Balance amount"
         }
       },
@@ -254,10 +254,14 @@
       },
       "title": "List: balances"
     },
-    "tokenBigInt": {
+    "tokenDecimal": {
       "type": "object",
       "properties": {
-        "data": {
+        "scale": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "value": {
           "type": "string"
         }
       }
@@ -311,7 +315,7 @@
           }
         },
         "amount": {
-          "$ref": "#/definitions/tokenBigInt"
+          "$ref": "#/definitions/tokenDecimal"
         },
         "meta": {
           "type": "array",
@@ -340,7 +344,7 @@
           }
         },
         "amount": {
-          "$ref": "#/definitions/tokenBigInt"
+          "$ref": "#/definitions/tokenDecimal"
         },
         "meta": {
           "type": "array",
