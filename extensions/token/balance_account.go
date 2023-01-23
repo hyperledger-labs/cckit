@@ -30,7 +30,7 @@ func (s *AccountStore) Get(ctx router.Context, id *BalanceId) (*Balance, error) 
 				Address: id.Address,
 				Symbol:  id.Symbol,
 				Group:   id.Group,
-				Amount:  NewBigInt(big.NewInt(0)),
+				Amount:  NewDecimal(big.NewInt(0)),
 			}, nil
 		}
 		return nil, err
@@ -154,7 +154,7 @@ func (s *AccountStore) add(ctx router.Context, op *BalanceOperation) (*Balance, 
 		Address: op.Address,
 		Symbol:  op.Symbol,
 		Group:   op.Group,
-		Amount:  NewBigIntSum(curBalanceAmount, toAdd),
+		Amount:  BigIntSubAsDecimal(curBalanceAmount, toAdd),
 	}
 
 	if err = State(ctx).Put(newBalance); err != nil {
@@ -185,7 +185,7 @@ func (s *AccountStore) sub(ctx router.Context, op *BalanceOperation) (*Balance, 
 		Address: op.Address,
 		Symbol:  op.Symbol,
 		Group:   op.Group,
-		Amount:  NewBigIntSub(balAmount, opAmount),
+		Amount:  BigIntSubAsDecimal(balAmount, opAmount),
 	}
 
 	if err = State(ctx).Put(newBalance); err != nil {

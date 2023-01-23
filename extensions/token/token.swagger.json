@@ -453,14 +453,6 @@
         }
       }
     },
-    "tokenBigInt": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "string"
-        }
-      }
-    },
     "tokenConfig": {
       "type": "object",
       "properties": {
@@ -493,7 +485,7 @@
           "type": "string"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenBigInt"
+          "$ref": "#/definitions/tokenDecimal"
         },
         "meta": {
           "type": "array",
@@ -520,13 +512,25 @@
           "$ref": "#/definitions/tokenTokenGroupType"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenBigInt"
+          "$ref": "#/definitions/tokenDecimal"
         },
         "meta": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/tokenTokenMetaRequest"
           }
+        }
+      }
+    },
+    "tokenDecimal": {
+      "type": "object",
+      "properties": {
+        "scale": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "value": {
+          "type": "string"
         }
       }
     },
@@ -557,7 +561,7 @@
           "type": "string"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenBigInt"
+          "$ref": "#/definitions/tokenDecimal"
         },
         "meta": {
           "type": "array",
@@ -638,7 +642,7 @@
           "format": "int64"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenBigInt"
+          "$ref": "#/definitions/tokenDecimal"
         },
         "group_type": {
           "$ref": "#/definitions/tokenTokenGroupType"

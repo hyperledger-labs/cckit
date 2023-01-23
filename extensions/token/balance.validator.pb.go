@@ -18,7 +18,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *BigInt) Validate() error {
+func (this *Decimal) Validate() error {
 	return nil
 }
 func (this *TransferRequest) Validate() error {

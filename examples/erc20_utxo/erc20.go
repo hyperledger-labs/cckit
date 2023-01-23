@@ -16,7 +16,7 @@ var (
 		Name:        `SomeToken`,
 		Symbol:      `@`,
 		Decimals:    2,
-		TotalSupply: token.NewBigInt(big.NewInt(10000000)),
+		TotalSupply: token.NewDecimal(big.NewInt(10000000)),
 	}
 )
 
