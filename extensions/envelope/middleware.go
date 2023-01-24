@@ -39,7 +39,7 @@ func Verify() router.MiddlewareFunc {
 	}
 }
 
-func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
+func verifyEnvelope(c router.Context, m, p, sig []byte) error {
 	data, err := c.Serializer().FromBytesTo(sig, &Envelope{})
 	if err != nil {
 		c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
@@ -52,7 +52,7 @@ func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
 	}
 
 	// check method and channel names because envelope can only be used once for channel+chaincode+method combination
-	if string(method) != envelope.Method {
+	if string(m) != envelope.Method {
 		c.Logger().Sugar().Error(ErrInvalidMethod)
 		return ErrInvalidMethod
 	}
@@ -62,7 +62,7 @@ func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
 	}
 
 	// replay attack check
-	txHash := txNonceKey(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
+	txHash := txNonceKey(p, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
 	key, err := c.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
 		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 			return err
 		}
-		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey, envelope.Signature); err != nil {
+		if err := CheckSig(p, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.Deadline.String(), envelope.PublicKey, envelope.Signature); err != nil {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return ErrCheckSignatureFailed
 		}
