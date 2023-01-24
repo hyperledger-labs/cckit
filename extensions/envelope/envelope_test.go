@@ -107,6 +107,15 @@ var _ = Describe(`Envelop`, func() {
 			Expect(resp.Status).To(BeNumerically("==", 200))
 		})
 
+		FIt("Allow to verify valid signature without deadline", func() {
+			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, methodInvoke)
+
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
+			resp := envelopCC.Invoke(methodInvoke, payload, serializedEnvelope)
+
+			Expect(resp.Status).To(BeNumerically("==", 200))
+		})
+
 		It("Disallow to verify signature with invalid payload", func() {
 			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, methodInvoke, deadline)
 
@@ -176,22 +185,25 @@ var _ = Describe(`Envelop`, func() {
 
 })
 
-func createEnvelope(payload []byte, channel, chaincode, method string, deadline *timestamppb.Timestamp) ([]byte, *e.Envelope) {
+func createEnvelope(payload []byte, channel, chaincode, method string, deadline ...*timestamppb.Timestamp) ([]byte, *e.Envelope) {
 	publicKey, privateKey, _ := e.CreateKeys()
 	nonce := e.CreateNonce()
-	hashToSign := e.Hash(payload, nonce, channel, chaincode, method, deadline.String(), []byte(publicKey))
-	_, sig := e.CreateSig(payload, nonce, channel, chaincode, method, deadline.String(), privateKey)
 	envelope := &e.Envelope{
-		PublicKey:  publicKey,
-		Signature:  sig,
-		Nonce:      nonce,
-		HashToSign: hashToSign[:],
-		HashFunc:   "SHA3-256",
-		Deadline:   deadline,
-		Channel:    channel,
-		Chaincode:  chaincode,
-		Method:     method,
+		PublicKey: publicKey,
+		Nonce:     nonce,
+		HashFunc:  "SHA3-256",
+		Channel:   channel,
+		Chaincode: chaincode,
+		Method:    method,
 	}
+	if len(deadline) > 0 {
+		envelope.Deadline = deadline[0]
+	}
+	hashToSign := e.Hash(payload, nonce, channel, chaincode, method, envelope.Deadline.String(), []byte(publicKey))
+	_, sig := e.CreateSig(payload, nonce, channel, chaincode, method, envelope.Deadline.String(), privateKey)
+	envelope.HashToSign = hashToSign[:]
+	envelope.Signature = sig
+
 	serializedEnvelope, _ := serialize.PreferJSONSerializer.ToBytesFrom(envelope)
 	return serializedEnvelope, envelope
 }

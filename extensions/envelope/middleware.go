@@ -40,22 +40,24 @@ func Verify() router.MiddlewareFunc {
 	}
 }
 
-func verifyEnvelope(c router.Context, m, p, e []byte) error {
-	// parse json envelope format
+func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
+	// parse json envelope format (json is original format for envelope from frontend)
 	serializer := serialize.PreferJSONSerializer
-	data, err := serializer.FromBytesTo(e, &Envelope{})
+	data, err := serializer.FromBytesTo(envlp, &Envelope{})
 	if err != nil {
 		c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 		return err
 	}
 	envelope := data.(*Envelope)
-	if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
-		c.Logger().Sugar().Error(ErrDeadlineExpired)
-		return ErrDeadlineExpired
+	if envelope.Deadline.AsTime().Unix() != 0 {
+		if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
+			c.Logger().Sugar().Error(ErrDeadlineExpired)
+			return ErrDeadlineExpired
+		}
 	}
 
 	// check method and channel names because envelope can only be used once for channel+chaincode+method combination
-	if string(m) != envelope.Method {
+	if string(method) != envelope.Method {
 		c.Logger().Sugar().Error(ErrInvalidMethod)
 		return ErrInvalidMethod
 	}
@@ -65,7 +67,7 @@ func verifyEnvelope(c router.Context, m, p, e []byte) error {
 	}
 
 	// replay attack check
-	txHash := txNonceKey(p, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
+	txHash := txNonceKey(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
 	key, err := c.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
 	if err != nil {
 		return err
@@ -75,7 +77,7 @@ func verifyEnvelope(c router.Context, m, p, e []byte) error {
 		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 			return err
 		}
-		if err := CheckSig(p, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.Deadline.String(), envelope.PublicKey, envelope.Signature); err != nil {
+		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.Deadline.String(), envelope.PublicKey, envelope.Signature); err != nil {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return ErrCheckSignatureFailed
 		}
