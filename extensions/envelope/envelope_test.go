@@ -107,7 +107,7 @@ var _ = Describe(`Envelop`, func() {
 			Expect(resp.Status).To(BeNumerically("==", 200))
 		})
 
-		FIt("Allow to verify valid signature without deadline", func() {
+		It("Allow to verify valid signature without deadline", func() {
 			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, methodInvoke)
 
 			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
