@@ -13,4 +13,7 @@ message Payment {
   // test marshalling more with more types (include complex)
   bytes key = 4; 
   google.protobuf.Timestamp deadline = 5; 
+
+  // test camel and snake cases 
+  string snake_or_camel = 6; 
 }

@@ -25,11 +25,12 @@ var (
 	StringToSerialize = `my-string`
 	BytesToSerialize  = []byte(`some bytes`)
 	ProtoToSerialize  = &testdata.Payment{
-		Type:     "some-type",
-		Id:       "some-id",
-		Amount:   100,
-		Key:      []byte("public-key"),
-		Deadline: timestamppb.New(time.Now().AddDate(0, 0, 2)),
+		Type:         "some-type",
+		Id:           "some-id",
+		Amount:       100,
+		Key:          []byte("public-key"),
+		Deadline:     timestamppb.New(time.Now().AddDate(0, 0, 2)),
+		SnakeOrCamel: "snake_case or camelCase",
 	}
 	err error
 )
@@ -128,7 +129,25 @@ var _ = Describe(`Prefer JSON serializer`, func() {
 	serializer := serialize.PreferJSONSerializer
 
 	var serializedProtoAsJSON []byte
-	It(`serialize`, func() {
+	It(`serialize (snake_case)`, func() {
+		serializedProtoAsJSON, err = serializer.ToBytesFrom(ProtoToSerialize)
+		Expect(err).NotTo(HaveOccurred())
+
+		bb, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(ProtoToSerialize)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(serializedProtoAsJSON).To(Equal(bb))
+	})
+
+	It(`deserialize (snake_case)`, func() {
+		deserializedProto, err := serializer.FromBytesTo(serializedProtoAsJSON, &testdata.Payment{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(deserializedProto).To(gomega.StringerEqual(ProtoToSerialize))
+	})
+
+	It(`serialize (camelCase)`, func() {
+		serializer.UseProtoNames = false
+
 		serializedProtoAsJSON, err = serializer.ToBytesFrom(ProtoToSerialize)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -138,7 +157,7 @@ var _ = Describe(`Prefer JSON serializer`, func() {
 		Expect(serializedProtoAsJSON).To(Equal(bb))
 	})
 
-	It(`deserialize`, func() {
+	It(`deserialize (camelCase)`, func() {
 		deserializedProto, err := serializer.FromBytesTo(serializedProtoAsJSON, &testdata.Payment{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(deserializedProto).To(gomega.StringerEqual(ProtoToSerialize))
