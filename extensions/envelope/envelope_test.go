@@ -163,7 +163,7 @@ var _ = Describe(`Envelop`, func() {
 				Chaincode:  chaincode,
 				Method:     methodInvoke,
 			}
-			serializer := serialize.DefaultSerializer
+			serializer := serialize.PreferJSONSerializer
 			serializedEnvelope, _ := serializer.ToBytesFrom(envelope)
 
 			resp := envelopCC.Invoke(methodInvoke, payload, serializedEnvelope)
@@ -192,6 +192,6 @@ func createEnvelope(payload []byte, channel, chaincode, method string, deadline 
 		Chaincode:  chaincode,
 		Method:     method,
 	}
-	serializedEnvelope, _ := serialize.DefaultSerializer.ToBytesFrom(envelope)
+	serializedEnvelope, _ := serialize.PreferJSONSerializer.ToBytesFrom(envelope)
 	return serializedEnvelope, envelope
 }
