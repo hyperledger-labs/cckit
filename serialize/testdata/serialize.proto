@@ -3,8 +3,17 @@ syntax = "proto3";
 option go_package = "github.com/hyperledger-labs/cckit/serialize/testdata;testdata";
 package testdata;
 
+import "google/protobuf/timestamp.proto";
+
 message Payment {
   string type = 1;
   string id = 2;
   int32 amount = 3;
+  
+  // test marshalling more with more types (include complex)
+  bytes key = 4; 
+  google.protobuf.Timestamp deadline = 5; 
+
+  // test camel and snake cases 
+  string snake_or_camel = 6; 
 }

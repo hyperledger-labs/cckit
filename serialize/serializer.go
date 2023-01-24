@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type (
@@ -12,8 +13,9 @@ type (
 	TargetType     string
 
 	GenericSerializer struct {
-		Supports []SuppportedType
-		Target   TargetType
+		Supports      []SuppportedType
+		Target        TargetType
+		UseProtoNames bool // to use proto field name instead of lowerCamelCase name in JSON field names
 	}
 
 	StringSerializer struct {
@@ -38,13 +40,15 @@ var (
 	PreferJSON    TargetType = `json`
 
 	DefaultSerializer = &GenericSerializer{
-		Supports: []SuppportedType{AnyType},
-		Target:   DefaultTarget,
+		Supports:      []SuppportedType{AnyType},
+		Target:        DefaultTarget,
+		UseProtoNames: true,
 	}
 
 	PreferJSONSerializer = &GenericSerializer{
-		Supports: []SuppportedType{AnyType},
-		Target:   PreferJSON,
+		Supports:      []SuppportedType{AnyType},
+		Target:        PreferJSON,
+		UseProtoNames: true,
 	}
 	KeySerializer = &StringSerializer{}
 
@@ -58,7 +62,8 @@ func (g *GenericSerializer) ToBytesFrom(entry interface{}) ([]byte, error) {
 
 	case proto.Message:
 		if g.Target == PreferJSON {
-			return JSONProtoMarshal(entryType)
+			mo := &protojson.MarshalOptions{UseProtoNames: g.UseProtoNames}
+			return JSONProtoMarshal(entryType, mo)
 		} else {
 			return BinaryProtoMarshal(entryType)
 		}

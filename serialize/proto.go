@@ -1,13 +1,11 @@
 package serialize
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type (
@@ -20,6 +18,7 @@ type (
 	}
 
 	JSONProtoSerializer struct {
+		UseProtoNames bool // to use proto field name instead of lowerCamelCase name in JSON field names
 	}
 )
 
@@ -32,7 +31,8 @@ func (ps *BinaryProtoSerializer) FromBytes(serialized []byte, target proto.Messa
 }
 
 func (js *JSONProtoSerializer) ToBytes(entry proto.Message) ([]byte, error) {
-	return JSONProtoMarshal(entry)
+	mo := &protojson.MarshalOptions{UseProtoNames: js.UseProtoNames}
+	return JSONProtoMarshal(entry, mo)
 }
 
 func (js *JSONProtoSerializer) FromBytes(serialized []byte, target proto.Message) (proto.Message, error) {
@@ -43,8 +43,8 @@ func BinaryProtoMarshal(entry proto.Message) ([]byte, error) {
 	return proto.Marshal(proto.Clone(entry))
 }
 
-func JSONProtoMarshal(entry proto.Message) ([]byte, error) {
-	return json.Marshal(proto.Clone(entry))
+func JSONProtoMarshal(entry proto.Message, mo *protojson.MarshalOptions) ([]byte, error) {
+	return mo.Marshal(proto.Clone(entry))
 }
 
 // BinaryProtoUnmarshal r unmarshalls []byte as proto.Message to pointer, and returns value pointed to
@@ -59,7 +59,8 @@ func BinaryProtoUnmarshal(bb []byte, messageType proto.Message) (message proto.M
 
 func JSONProtoUnmarshal(json []byte, messageType proto.Message) (message proto.Message, err error) {
 	msg := proto.Clone(messageType)
-	err = jsonpb.Unmarshal(bytes.NewReader(json), msg)
+	err = protojson.Unmarshal(json, msg)
+
 	if err != nil {
 		return nil, fmt.Errorf(`json proto unmarshal: %w`, err)
 	}
