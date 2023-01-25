@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/sha3"
 )
@@ -13,7 +14,7 @@ const (
 	// argument indexes
 	methodNamePos = iota
 	payloadPos
-	sigPos
+	envelopePos
 
 	nonceObjectType = "nonce"
 	invokeType      = "invoke"
@@ -29,7 +30,7 @@ func Verify() router.MiddlewareFunc {
 					c.Logger().Sugar().Error(ErrSignatureNotFound)
 					return nil, ErrSignatureNotFound
 				} else {
-					if err := verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[sigPos]); err != nil {
+					if err := verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
 						return nil, err
 					}
 				}
@@ -39,16 +40,20 @@ func Verify() router.MiddlewareFunc {
 	}
 }
 
-func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
-	data, err := c.Serializer().FromBytesTo(sig, &Envelope{})
+func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
+	// parse json envelope format (json is original format for envelope from frontend)
+	serializer := serialize.PreferJSONSerializer
+	data, err := serializer.FromBytesTo(envlp, &Envelope{})
 	if err != nil {
 		c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 		return err
 	}
 	envelope := data.(*Envelope)
-	if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
-		c.Logger().Sugar().Error(ErrDeadlineExpired)
-		return ErrDeadlineExpired
+	if envelope.Deadline.AsTime().Unix() != 0 {
+		if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
+			c.Logger().Sugar().Error(ErrDeadlineExpired)
+			return ErrDeadlineExpired
+		}
 	}
 
 	// check method and channel names because envelope can only be used once for channel+chaincode+method combination
@@ -72,7 +77,7 @@ func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
 		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 			return err
 		}
-		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey, envelope.Signature); err != nil {
+		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.Deadline.String(), envelope.PublicKey, envelope.Signature); err != nil {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return ErrCheckSignatureFailed
 		}
