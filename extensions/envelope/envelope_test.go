@@ -182,8 +182,8 @@ var _ = Describe(`Envelop`, func() {
 
 			publicKey, privateKey, _ := e.CreateKeys()
 			nonce := "thesamenonce"
-			hashToSign := e.Hash(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format("2006-01-02T15:04:05.000Z"), []byte(publicKey))
-			_, sig := e.CreateSig(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format("2006-01-02T15:04:05.000Z"), privateKey)
+			hashToSign := e.Hash(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format(e.TimeLayout), []byte(publicKey))
+			_, sig := e.CreateSig(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format(e.TimeLayout), privateKey)
 			envelope := &e.Envelope{
 				PublicKey:  hex.EncodeToString([]byte(publicKey)),
 				Signature:  hex.EncodeToString(sig),
@@ -223,7 +223,7 @@ func createEnvelope(payload []byte, channel, chaincode, method string, deadline 
 	var formatDeadline string
 	if len(deadline) > 0 {
 		envelope.Deadline = deadline[0]
-		formatDeadline = envelope.Deadline.AsTime().Format("2006-01-02T15:04:05.000Z")
+		formatDeadline = envelope.Deadline.AsTime().Format(e.TimeLayout)
 	}
 	hashToSign := e.Hash(payload, nonce, channel, chaincode, method, formatDeadline, publicKey)
 	envelope.HashToSign = hex.EncodeToString(hashToSign[:])

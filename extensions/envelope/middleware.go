@@ -19,6 +19,8 @@ const (
 
 	nonceObjectType = "nonce"
 	invokeType      = "invoke"
+
+	TimeLayout = "2006-01-02T15:04:05.000Z"
 )
 
 // middleware for checking signature that is got in envelop
@@ -90,7 +92,7 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
 		// convert deadline to frontend format
 		var deadline string
 		if envelope.Deadline != nil {
-			deadline = envelope.Deadline.AsTime().Format("2006-01-02T15:04:05.000Z")
+			deadline = envelope.Deadline.AsTime().Format(TimeLayout)
 		}
 		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
