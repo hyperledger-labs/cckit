@@ -54,3 +54,85 @@ The signature is generated using Ed25519.
 ```
 r := router.New(name).Use(envelope.Verify)
 ```
+
+### Create an envelope using js
+
+```
+const { sign } = require('tweetnacl');
+const { createHash } = require('crypto');
+
+// CREATE ENVELOPE
+
+function createEnvelope(
+  payload,
+  nonce,
+  channel,
+  chaincode,
+  method,
+  deadline,
+  keys
+) {
+  const pk = Buffer.from(keys.publicKey).toString('hex');
+
+  // make message to sign
+  const b1 = Buffer.from(JSON.stringify(payload));
+  const b2 = Buffer.from(nonce);
+  const b3 = Buffer.from(channel);
+  const b4 = Buffer.from(chaincode);
+  const b5 = Buffer.from(method);
+  const b6 = Buffer.from(deadline);
+  const b7 = Buffer.from(pk);
+  const arr = [b1, b2, b3, b4, b5, b6, b7];
+  const bb = Buffer.concat(arr);
+
+  // hash the message
+  const hashed = createHash('sha256').update(bb).digest();
+
+  // sign the hash
+  const signature = sign.detached(hashed, keys.secretKey);
+
+  // make the envelope
+  const envelope = {
+    hash_func: 'SHA256',
+    hash_to_sign: hashed.toString('hex'),
+    nonce: nonce,
+    channel: channel,
+    method: method,
+    chaincode: chaincode,
+    deadline: deadline,
+    public_key: Buffer.from(keys.publicKey).toString('hex'),
+    signature: Buffer.from(signature).toString('hex'),
+  };
+
+  return JSON.stringify(envelope);
+}
+
+// MAIN
+
+const payload = {
+  symbol: 'GLD',
+  decimals: '8',
+  name: 'Gold digital asset',
+  type: 'DM',
+  underlying_asset: 'gold',
+  issuer_id: 'GLDINC',
+};
+
+const chaincode = 'envelope-chaincode';
+const channel = 'envelope-channel';
+const method = 'invokeWithEnvelope';
+const nonce = String(new Date().getTime());
+const deadline = new Date(new Date().getTime() + 86400000).toISOString(); // if without deadline then use new Date(0).toISOString()
+
+const keys = sign.keyPair();
+
+const envelope = createEnvelope(
+  payload,
+  nonce,
+  channel,
+  chaincode,
+  method,
+  deadline,
+  keys
+);
+```
