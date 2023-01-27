@@ -3,9 +3,9 @@ package envelope
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"time"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/serialize"
 	"go.uber.org/zap"
@@ -80,15 +80,9 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
 		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 			return err
 		}
-		// convert public key and sig from hex string
-		pubkey, err := hex.DecodeString(envelope.PublicKey)
-		if err != nil {
-			return err
-		}
-		sig, err := hex.DecodeString(envelope.Signature)
-		if err != nil {
-			return err
-		}
+		// convert public key and sig from base58
+		pubkey := base58.Decode(envelope.PublicKey)
+		sig := base58.Decode(envelope.Signature)
 		// convert deadline to frontend format
 		var deadline string
 		if envelope.Deadline != nil {

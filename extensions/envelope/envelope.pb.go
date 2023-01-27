@@ -28,10 +28,10 @@ type Envelope struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PublicKey  string                 `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`      // signer public key
-	Signature  string                 `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`                       // payload signature
+	PublicKey  string                 `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`      // signer public key in base58
+	Signature  string                 `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`                       // payload signature in base58
 	Nonce      string                 `protobuf:"bytes,3,opt,name=nonce,proto3" json:"nonce,omitempty"`                               // number is given for replay protection
-	HashToSign string                 `protobuf:"bytes,4,opt,name=hash_to_sign,json=hashToSign,proto3" json:"hash_to_sign,omitempty"` // payload hash
+	HashToSign string                 `protobuf:"bytes,4,opt,name=hash_to_sign,json=hashToSign,proto3" json:"hash_to_sign,omitempty"` // payload hash in base58
 	HashFunc   string                 `protobuf:"bytes,5,opt,name=hash_func,json=hashFunc,proto3" json:"hash_func,omitempty"`         // function used for hashing
 	Deadline   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=deadline,proto3" json:"deadline,omitempty"`                         // signature is not valid after deadline (EIP-2612)
 	// channel + chaincode + method are used as domain separator to prevent replay attack from other domains (EIP-2612)

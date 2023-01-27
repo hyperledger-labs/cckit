@@ -60,6 +60,7 @@ r := router.New(name).Use(envelope.Verify)
 ```
 const { sign } = require('tweetnacl');
 const { createHash } = require('crypto');
+const bs58 = require('bs58');
 
 // CREATE ENVELOPE
 
@@ -72,7 +73,7 @@ function createEnvelope(
   deadline,
   keys
 ) {
-  const pk = Buffer.from(keys.publicKey).toString('hex');
+  const pk = bs58.encode(Buffer.from(keys.publicKey));
 
   // make message to sign
   const b1 = Buffer.from(JSON.stringify(payload));
@@ -94,15 +95,17 @@ function createEnvelope(
   // make the envelope
   const envelope = {
     hash_func: 'SHA256',
-    hash_to_sign: hashed.toString('hex'),
+    hash_to_sign: bs58.encode(hashed),
     nonce: nonce,
     channel: channel,
     method: method,
     chaincode: chaincode,
     deadline: deadline,
-    public_key: Buffer.from(keys.publicKey).toString('hex'),
-    signature: Buffer.from(signature).toString('hex'),
+    public_key: pk,
+    signature: bs58.encode(Buffer.from(signature)),
   };
+
+  console.log(JSON.stringify(envelope));
 
   return JSON.stringify(envelope);
 }
@@ -126,13 +129,7 @@ const deadline = new Date(new Date().getTime() + 86400000).toISOString(); // if 
 
 const keys = sign.keyPair();
 
-const envelope = createEnvelope(
-  payload,
-  nonce,
-  channel,
-  chaincode,
-  method,
-  deadline,
-  keys
+const envelope = btoa(
+  createEnvelope(payload, nonce, channel, chaincode, method, deadline, keys)
 );
 ```

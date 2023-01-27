@@ -4,9 +4,10 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/hex"
 	"strconv"
 	"time"
+
+	"github.com/btcsuite/btcutil/base58"
 )
 
 func CreateKeys() (ed25519.PublicKey, ed25519.PrivateKey, error) {
@@ -27,8 +28,8 @@ func Hash(payload []byte, nonce, channel, chaincode, method, deadline string, pu
 	bb = append(bb, chaincode...)
 	bb = append(bb, method...)
 	bb = append(bb, deadline...)
-	hexPubKey := hex.EncodeToString(pubkey)
-	bb = append(bb, hexPubKey...)
+	b58Pubkey := base58.Encode(pubkey)
+	bb = append(bb, b58Pubkey...)
 	return sha256.Sum256(bb)
 }
 
