@@ -117,7 +117,8 @@ var _ = Describe(`Envelop`, func() {
 		})
 
 		It("Allow to verify valid signature from the envelope in base64 format with deadline", func() {
-			b64Envelope := "eyJoYXNoX2Z1bmMiOiJTSEEyNTYiLCJoYXNoX3RvX3NpZ24iOiJCVDlSMWE4UEViRlpjQnBmSmRNdU03M1VldHBkcThoeXA4aFp3V2I0UzdVOSIsIm5vbmNlIjoiMTY3NDgyNDY5NTM0NCIsImNoYW5uZWwiOiJlbnZlbG9wZS1jaGFubmVsIiwibWV0aG9kIjoiaW52b2tlV2l0aEVudmVsb3BlIiwiY2hhaW5jb2RlIjoiZW52ZWxvcGUtY2hhaW5jb2RlIiwiZGVhZGxpbmUiOiIyMDIzLTAxLTI4VDEzOjA0OjU1LjM0NFoiLCJwdWJsaWNfa2V5IjoiNG1zYTRERUZKcFF1ZlNhMndwVHJBWkhwQUpDVUFHMmtQRUxnSHNSbUpyRjMiLCJzaWduYXR1cmUiOiIzOHZnZTJRMWN0MUo3SzM2QzIzM2g5dDg4Zk0xeHg0RFI0M0ZRNG9oYUJOYU13UXhwbVJUQXNSdUM1NFVydmRuNTJEY3JpSzVyVXVGMURxcUh1dkFkUWl4In0="
+			jsonEnvelope := `{"hash_func":"SHA256","hash_to_sign":"Bjd5D5qq3FFj1fSGt7QsHNqrfdDBzY7Cs5Wm45WZ19LE","nonce":"1675065805271","channel":"envelope-channel","method":"invokeWithEnvelope","chaincode":"envelope-chaincode","deadline":"2033-01-31T07:58:39.677Z","public_key":"EH9cLNxpg4FQmow9i1cF1b2vXkaJ17wUym7GSEeX6LQv","signature":"VG8P1ShwTGqVNhV8DVaZaVfxbZp7E8G9cpBbUPXFsGiwqLk1NJZFg2jt3ff1uJK92t2TbzkfyiL5ZTHsjYCdoQk"}`
+			b64Envelope := base64.StdEncoding.EncodeToString([]byte(jsonEnvelope))
 			decodedEnvelope, err := e.DecodeEnvelope([]byte(b64Envelope))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -128,7 +129,8 @@ var _ = Describe(`Envelop`, func() {
 		})
 
 		It("Allow to verify valid signature from the envelope in base64 format without deadline", func() {
-			b64Envelope := "eyJoYXNoX2Z1bmMiOiJTSEEyNTYiLCJoYXNoX3RvX3NpZ24iOiJBSFNzVXhvMUpTajhDNWdtcWFBZzkxRzVrUVlIQUVEWDVrVWozOGVLZEsyYyIsIm5vbmNlIjoiMTY3NDgyNDczOTcwMyIsImNoYW5uZWwiOiJlbnZlbG9wZS1jaGFubmVsIiwibWV0aG9kIjoiaW52b2tlV2l0aEVudmVsb3BlIiwiY2hhaW5jb2RlIjoiZW52ZWxvcGUtY2hhaW5jb2RlIiwiZGVhZGxpbmUiOiIxOTcwLTAxLTAxVDAwOjAwOjAwLjAwMFoiLCJwdWJsaWNfa2V5IjoiRndLaGNCY3J3VVNWZWFMWVNIOGNWZFZpYWVBcFBjVUE5ZlZDSkM0SDhGUCIsInNpZ25hdHVyZSI6IjJEUTlBR0RkeDJpRUxUV2lVcjg4Ylg3NnJ2YXpUcmJ6d3B6R3Rha1JvSEJTYWVUaWR5azhNOVd2M3BMRVRLQjVxVVE5RDc0Y1BMd2l1VFNCaGJ5OHFrR2oifQ=="
+			jsonEnvelope := `{"hash_func":"SHA256","hash_to_sign":"H4HmQKUQJm2bxJvSDPpHaP5vYYGvL5dUqWEfTzNN3eeH","nonce":"1675065554644","channel":"envelope-channel","method":"invokeWithEnvelope","chaincode":"envelope-chaincode","deadline":"2033-01-31T07:58:39.677Z","public_key":"8JjYvYrzbeTuhuJnBJ7GKtwdofbnNwQnX8gmDrbNfYd2","signature":"36xWPPs7h1HKJgSGEHkzYqqP5M7gT44apSPya2RodBirPzsR7wrnvSXZu73rQnp4pJNYHKtVC3wBVcZkvfMmrnfk"}`
+			b64Envelope := base64.StdEncoding.EncodeToString([]byte(jsonEnvelope))
 			decodedEnvelope, err := e.DecodeEnvelope([]byte(b64Envelope))
 			Expect(err).NotTo(HaveOccurred())
 
