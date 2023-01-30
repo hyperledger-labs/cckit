@@ -8,10 +8,10 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 message Envelope {
-  bytes public_key = 1; // signer public key
-  bytes signature = 2; // payload signature
+  string public_key = 1; // signer public key in base58 
+  string signature = 2; // payload signature in base58 
   string nonce = 3; // number is given for replay protection
-  bytes hash_to_sign = 4; // payload hash
+  string hash_to_sign = 4; // payload hash in base58 
   string hash_func = 5; // function used for hashing
   google.protobuf.Timestamp deadline = 6; // signature is not valid after deadline (EIP-2612)
   // channel + chaincode + method are used as domain separator to prevent replay attack from other domains (EIP-2612)

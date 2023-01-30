@@ -3,10 +3,11 @@ package envelope
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
 	"strconv"
 	"time"
 
-	"golang.org/x/crypto/sha3"
+	"github.com/btcsuite/btcutil/base58"
 )
 
 func CreateKeys() (ed25519.PublicKey, ed25519.PrivateKey, error) {
@@ -27,8 +28,9 @@ func Hash(payload []byte, nonce, channel, chaincode, method, deadline string, pu
 	bb = append(bb, chaincode...)
 	bb = append(bb, method...)
 	bb = append(bb, deadline...)
-	bb = append(bb, pubkey...)
-	return sha3.Sum256(bb)
+	b58Pubkey := base58.Encode(pubkey)
+	bb = append(bb, b58Pubkey...)
+	return sha256.Sum256(bb)
 }
 
 func CreateSig(payload []byte, nonce, channel, chaincode, method, deadline string, privateKey []byte) ([]byte, []byte) {

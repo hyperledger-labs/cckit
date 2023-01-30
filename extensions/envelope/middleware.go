@@ -1,13 +1,14 @@
 package envelope
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"time"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/serialize"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 
 	nonceObjectType = "nonce"
 	invokeType      = "invoke"
+
+	TimeLayout = "2006-01-02T15:04:05.000Z"
 )
 
 // middleware for checking signature that is got in envelop
@@ -77,7 +80,15 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
 		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 			return err
 		}
-		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.Deadline.String(), envelope.PublicKey, envelope.Signature); err != nil {
+		// convert public key and sig from base58
+		pubkey := base58.Decode(envelope.PublicKey)
+		sig := base58.Decode(envelope.Signature)
+		// convert deadline to frontend format
+		var deadline string
+		if envelope.Deadline != nil {
+			deadline = envelope.Deadline.AsTime().Format(TimeLayout)
+		}
+		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return ErrCheckSignatureFailed
 		}
@@ -88,12 +99,12 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
 	return nil
 }
 
-func txNonceKey(payload []byte, nonce, channel, chaincode, method string, pubKey []byte) string {
+func txNonceKey(payload []byte, nonce, channel, chaincode, method, pubKey string) string {
 	bb := append(payload, pubKey...)
 	bb = append(bb, nonce...)
 	bb = append(bb, channel...)
 	bb = append(bb, chaincode...)
 	bb = append(bb, method...)
-	hashed := sha3.Sum256(bb)
+	hashed := sha256.Sum256(bb)
 	return base64.StdEncoding.EncodeToString(hashed[:])
 }

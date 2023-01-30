@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-
+	"github.com/btcsuite/btcutil/base58"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	e "github.com/hyperledger-labs/cckit/extensions/envelope"
 	"github.com/hyperledger-labs/cckit/extensions/envelope/testdata"
@@ -29,13 +29,13 @@ var (
 
 	envelopCC *testcc.MockStub
 
-	chaincode    = "envelop-chaincode"
-	channel      = "inv-channel"
+	chaincode    = "envelope-chaincode"
+	channel      = "envelope-channel"
 	methodInvoke = "invokeWithEnvelope"
 	methodQuery  = "queryWithoutEnvelope"
 	deadline     = timestamppb.New(time.Now().AddDate(0, 0, 2))
 
-	payload = []byte("signed payload")
+	payload = []byte(`{"symbol":"GLD","decimals":"8","name":"Gold digital asset","type":"DM","underlying_asset":"gold","issuer_id":"GLDINC"}`)
 )
 
 var _ = Describe(`Envelop`, func() {
@@ -116,6 +116,30 @@ var _ = Describe(`Envelop`, func() {
 			Expect(resp.Status).To(BeNumerically("==", 200))
 		})
 
+		It("Allow to verify valid signature from the envelope in base64 format with deadline", func() {
+			jsonEnvelope := `{"hash_func":"SHA256","hash_to_sign":"Bjd5D5qq3FFj1fSGt7QsHNqrfdDBzY7Cs5Wm45WZ19LE","nonce":"1675065805271","channel":"envelope-channel","method":"invokeWithEnvelope","chaincode":"envelope-chaincode","deadline":"2033-01-31T07:58:39.677Z","public_key":"EH9cLNxpg4FQmow9i1cF1b2vXkaJ17wUym7GSEeX6LQv","signature":"VG8P1ShwTGqVNhV8DVaZaVfxbZp7E8G9cpBbUPXFsGiwqLk1NJZFg2jt3ff1uJK92t2TbzkfyiL5ZTHsjYCdoQk"}`
+			b64Envelope := base64.StdEncoding.EncodeToString([]byte(jsonEnvelope))
+			decodedEnvelope, err := e.DecodeEnvelope([]byte(b64Envelope))
+			Expect(err).NotTo(HaveOccurred())
+
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
+			resp := envelopCC.Invoke(methodInvoke, payload, decodedEnvelope)
+
+			Expect(resp.Status).To(BeNumerically("==", 200))
+		})
+
+		It("Allow to verify valid signature from the envelope in base64 format without deadline", func() {
+			jsonEnvelope := `{"hash_func":"SHA256","hash_to_sign":"H4HmQKUQJm2bxJvSDPpHaP5vYYGvL5dUqWEfTzNN3eeH","nonce":"1675065554644","channel":"envelope-channel","method":"invokeWithEnvelope","chaincode":"envelope-chaincode","deadline":"2033-01-31T07:58:39.677Z","public_key":"8JjYvYrzbeTuhuJnBJ7GKtwdofbnNwQnX8gmDrbNfYd2","signature":"36xWPPs7h1HKJgSGEHkzYqqP5M7gT44apSPya2RodBirPzsR7wrnvSXZu73rQnp4pJNYHKtVC3wBVcZkvfMmrnfk"}`
+			b64Envelope := base64.StdEncoding.EncodeToString([]byte(jsonEnvelope))
+			decodedEnvelope, err := e.DecodeEnvelope([]byte(b64Envelope))
+			Expect(err).NotTo(HaveOccurred())
+
+			envelopCC = testcc.NewMockStub(chaincode, testdata.NewEnvelopCC(chaincode)).WithChannel(channel)
+			resp := envelopCC.Invoke(methodInvoke, payload, decodedEnvelope)
+
+			Expect(resp.Status).To(BeNumerically("==", 200))
+		})
+
 		It("Disallow to verify signature with invalid payload", func() {
 			serializedEnvelope, _ := createEnvelope(payload, channel, chaincode, methodInvoke, deadline)
 
@@ -159,14 +183,14 @@ var _ = Describe(`Envelop`, func() {
 
 			publicKey, privateKey, _ := e.CreateKeys()
 			nonce := "thesamenonce"
-			hashToSign := e.Hash(payload, nonce, channel, chaincode, methodInvoke, deadline.String(), []byte(publicKey))
-			_, sig := e.CreateSig(payload, nonce, channel, chaincode, methodInvoke, deadline.String(), privateKey)
+			hashToSign := e.Hash(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format(e.TimeLayout), []byte(publicKey))
+			_, sig := e.CreateSig(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format(e.TimeLayout), privateKey)
 			envelope := &e.Envelope{
-				PublicKey:  publicKey,
-				Signature:  sig,
+				PublicKey:  base58.Encode([]byte(publicKey)),
+				Signature:  base58.Encode(sig),
 				Nonce:      nonce,
-				HashToSign: hashToSign[:],
-				HashFunc:   "SHA3-256",
+				HashToSign: base58.Encode(hashToSign[:]),
+				HashFunc:   "SHA256",
 				Deadline:   deadline,
 				Channel:    channel,
 				Chaincode:  chaincode,
@@ -188,21 +212,25 @@ var _ = Describe(`Envelop`, func() {
 func createEnvelope(payload []byte, channel, chaincode, method string, deadline ...*timestamppb.Timestamp) ([]byte, *e.Envelope) {
 	publicKey, privateKey, _ := e.CreateKeys()
 	nonce := e.CreateNonce()
+
 	envelope := &e.Envelope{
-		PublicKey: publicKey,
+		PublicKey: base58.Encode([]byte(publicKey)),
 		Nonce:     nonce,
-		HashFunc:  "SHA3-256",
+		HashFunc:  "SHA256",
 		Channel:   channel,
 		Chaincode: chaincode,
 		Method:    method,
 	}
+	var formatDeadline string
 	if len(deadline) > 0 {
 		envelope.Deadline = deadline[0]
+		formatDeadline = envelope.Deadline.AsTime().Format(e.TimeLayout)
 	}
-	hashToSign := e.Hash(payload, nonce, channel, chaincode, method, envelope.Deadline.String(), []byte(publicKey))
-	_, sig := e.CreateSig(payload, nonce, channel, chaincode, method, envelope.Deadline.String(), privateKey)
-	envelope.HashToSign = hashToSign[:]
-	envelope.Signature = sig
+	hashToSign := e.Hash(payload, nonce, channel, chaincode, method, formatDeadline, publicKey)
+	envelope.HashToSign = base58.Encode(hashToSign[:])
+
+	_, sig := e.CreateSig(payload, nonce, channel, chaincode, method, formatDeadline, privateKey)
+	envelope.Signature = base58.Encode(sig)
 
 	serializedEnvelope, _ := serialize.PreferJSONSerializer.ToBytesFrom(envelope)
 	return serializedEnvelope, envelope
