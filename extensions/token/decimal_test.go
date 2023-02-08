@@ -20,7 +20,7 @@ var (
 	}
 
 	utxo1JSON  = []byte(`{"symbol":"a","group":"b","address":"c","tx_id":"d","amount":{"value":"12345"}}`)
-	utxo1JSON2 = []byte(` {"symbol":"a", "group":"b", "address":"c", "tx_id":"d", "amount":{"value":"12345"}}`)
+	utxo1JSON2 = []byte(`{"symbol":"a", "group":"b", "address":"c", "tx_id":"d", "amount":{"value":"12345"}}`)
 )
 var _ = Describe(`Bigint`, func() {
 
@@ -29,7 +29,6 @@ var _ = Describe(`Bigint`, func() {
 		bbJson, err := serialize.PreferJSONSerializer.ToBytesFrom(utxo1)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bbJson).To(Or(Equal(utxo1JSON), Equal(utxo1JSON2)))
-
 	})
 
 	It(`allow to deserialize from json (short version)`, func() {

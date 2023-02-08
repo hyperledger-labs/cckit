@@ -7,7 +7,6 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger-labs/cckit/router"
-	"github.com/hyperledger-labs/cckit/serialize"
 	"go.uber.org/zap"
 )
 
@@ -45,8 +44,7 @@ func Verify() router.MiddlewareFunc {
 
 func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
 	// parse json envelope format (json is original format for envelope from frontend)
-	serializer := serialize.PreferJSONSerializer
-	data, err := serializer.FromBytesTo(envlp, &Envelope{})
+	data, err := c.Serializer().FromBytesTo(envlp, &Envelope{})
 	if err != nil {
 		c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 		return err
@@ -92,6 +90,7 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return ErrCheckSignatureFailed
 		}
+		c.SetPubkey(envelope.PublicKey) // set Pubkey from envelope
 	} else {
 		c.Logger().Sugar().Error(ErrTxAlreadyExecuted)
 		return ErrTxAlreadyExecuted

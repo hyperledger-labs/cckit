@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 	testcc "github.com/hyperledger-labs/cckit/testing"
 )
 
@@ -17,7 +18,7 @@ func TestRouter(t *testing.T) {
 }
 
 func New() *router.Chaincode {
-	r := router.New(`router`).
+	r := router.New(`router`, serialize.PreferJSONSerializer).
 		Init(router.EmptyContextHandler).
 		Invoke(`empty`, func(c router.Context) (interface{}, error) {
 			return nil, nil
