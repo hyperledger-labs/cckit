@@ -21,13 +21,12 @@ type (
 )
 
 // NewChaincodeInstanceServiceInvoker
-// todo: serializer _temporary_ optional parameter
 func NewChaincodeInstanceServiceInvoker(
-	ccInstance ChaincodeInstanceServiceServer, serializers ...serialize.Serializer) *ChaincodeInstanceServiceInvoker {
+	ccInstance ChaincodeInstanceServiceServer, s ...serialize.Serializer) *ChaincodeInstanceServiceInvoker {
 
-	var serializer serialize.Serializer = serialize.DefaultSerializer
-	if len(serializers) > 0 {
-		serializer = serializers[0]
+	var serializer serialize.Serializer = serialize.DefaultSerializer // set default serializer as proto
+	if len(s) > 0 {
+		serializer = s[0]
 	}
 
 	c := &ChaincodeInstanceServiceInvoker{

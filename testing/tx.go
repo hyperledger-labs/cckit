@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger-labs/cckit/testing/expect"
 )
 
@@ -27,12 +28,18 @@ type (
 	}
 )
 
-func NewTxHandler(name string) (*TxHandler, router.Context) {
+func NewTxHandler(name string, serializer ...*serialize.GenericSerializer) (*TxHandler, router.Context) {
 	var (
 		mockStub = NewMockStub(name, nil)
 		logger   = router.NewLogger(name)
-		ctx      = router.NewContext(mockStub, logger)
+		ctx      = router.NewContext(mockStub, serialize.DefaultSerializer, logger)
 	)
+
+	// set serializer
+	if len(serializer) != 0 {
+		ctx = router.NewContext(mockStub, serializer[0], logger)
+	}
+
 	return &TxHandler{
 		MockStub: mockStub,
 		Logger:   logger,

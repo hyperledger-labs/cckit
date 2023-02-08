@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/hyperledger-labs/cckit/serialize"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"go.uber.org/zap"
@@ -38,8 +39,9 @@ type (
 
 	// Group of chain code functions
 	Group struct {
-		logger *zap.Logger
-		prefix string
+		logger     *zap.Logger
+		prefix     string
+		serializer serialize.Serializer
 
 		// mapping chaincode method  => handler
 		stubHandlers    map[string]StubHandlerFunc
@@ -214,16 +216,21 @@ func (g *Group) Init(handler HandlerFunc, middleware ...MiddlewareFunc) *Group {
 
 // Context returns chain code invoke context  for provided path and stub
 func (g *Group) Context(stub shim.ChaincodeStubInterface) Context {
-	return NewContext(stub, g.logger)
+	return NewContext(stub, g.serializer, g.logger)
 }
 
 // New group of chain code functions
-func New(name string) *Group {
+func New(name string, s ...serialize.Serializer) *Group {
 	g := new(Group)
 	g.logger = NewLogger(name)
 	g.stubHandlers = make(map[string]StubHandlerFunc)
 	g.contextHandlers = make(map[string]ContextHandlerFunc)
 	g.handlers = make(map[string]*HandlerMeta)
+
+	g.serializer = serialize.DefaultSerializer // set default serializer as proto
+	if len(s) > 0 {
+		g.serializer = s[0]
+	}
 
 	return g
 }
