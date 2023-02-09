@@ -220,16 +220,16 @@ func (g *Group) Context(stub shim.ChaincodeStubInterface) Context {
 }
 
 // New group of chain code functions
-func New(name string, s ...serialize.Serializer) *Group {
+func New(name string, opts ...RouterOpt) *Group {
 	g := new(Group)
 	g.logger = NewLogger(name)
 	g.stubHandlers = make(map[string]StubHandlerFunc)
 	g.contextHandlers = make(map[string]ContextHandlerFunc)
 	g.handlers = make(map[string]*HandlerMeta)
-
 	g.serializer = serialize.DefaultSerializer // set default serializer as proto
-	if len(s) > 0 {
-		g.serializer = s[0]
+
+	for _, opt := range opts {
+		opt(g)
 	}
 
 	return g

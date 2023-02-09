@@ -18,7 +18,7 @@ func TestRouter(t *testing.T) {
 }
 
 func New() *router.Chaincode {
-	r := router.New(`router`, serialize.PreferJSONSerializer).
+	r := router.New(`router`, router.WithSerializer(serialize.PreferJSONSerializer)).
 		Init(router.EmptyContextHandler).
 		Invoke(`empty`, func(c router.Context) (interface{}, error) {
 			return nil, nil
