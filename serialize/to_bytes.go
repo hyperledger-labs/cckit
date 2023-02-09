@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 // toBytes converts interface{} (string, []byte , struct to ToByter interface to []byte for storing in state

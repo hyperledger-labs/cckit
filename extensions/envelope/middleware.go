@@ -1,22 +1,26 @@
 package envelope
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"time"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/hyperledger-labs/cckit/router"
+	"github.com/hyperledger-labs/cckit/serialize"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/sha3"
 )
 
 const (
 	// argument indexes
 	methodNamePos = iota
 	payloadPos
-	sigPos
+	envelopePos
 
 	nonceObjectType = "nonce"
 	invokeType      = "invoke"
+
+	TimeLayout = "2006-01-02T15:04:05.000Z"
 )
 
 // middleware for checking signature that is got in envelop
@@ -29,7 +33,7 @@ func Verify() router.MiddlewareFunc {
 					c.Logger().Sugar().Error(ErrSignatureNotFound)
 					return nil, ErrSignatureNotFound
 				} else {
-					if err := verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[sigPos]); err != nil {
+					if err := verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
 						return nil, err
 					}
 				}
@@ -39,16 +43,20 @@ func Verify() router.MiddlewareFunc {
 	}
 }
 
-func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
-	data, err := c.Serializer().FromBytesTo(sig, &Envelope{})
+func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
+	// parse json envelope format (json is original format for envelope from frontend)
+	serializer := serialize.PreferJSONSerializer
+	data, err := serializer.FromBytesTo(envlp, &Envelope{})
 	if err != nil {
 		c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 		return err
 	}
 	envelope := data.(*Envelope)
-	if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
-		c.Logger().Sugar().Error(ErrDeadlineExpired)
-		return ErrDeadlineExpired
+	if envelope.Deadline.AsTime().Unix() != 0 {
+		if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
+			c.Logger().Sugar().Error(ErrDeadlineExpired)
+			return ErrDeadlineExpired
+		}
 	}
 
 	// check method and channel names because envelope can only be used once for channel+chaincode+method combination
@@ -72,7 +80,15 @@ func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
 		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
 			return err
 		}
-		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey, envelope.Signature); err != nil {
+		// convert public key and sig from base58
+		pubkey := base58.Decode(envelope.PublicKey)
+		sig := base58.Decode(envelope.Signature)
+		// convert deadline to frontend format
+		var deadline string
+		if envelope.Deadline != nil {
+			deadline = envelope.Deadline.AsTime().Format(TimeLayout)
+		}
+		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return ErrCheckSignatureFailed
 		}
@@ -83,12 +99,12 @@ func verifyEnvelope(c router.Context, method, payload, sig []byte) error {
 	return nil
 }
 
-func txNonceKey(payload []byte, nonce, channel, chaincode, method string, pubKey []byte) string {
+func txNonceKey(payload []byte, nonce, channel, chaincode, method, pubKey string) string {
 	bb := append(payload, pubKey...)
 	bb = append(bb, nonce...)
 	bb = append(bb, channel...)
 	bb = append(bb, chaincode...)
 	bb = append(bb, method...)
-	hashed := sha3.Sum256(bb)
+	hashed := sha256.Sum256(bb)
 	return base64.StdEncoding.EncodeToString(hashed[:])
 }

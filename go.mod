@@ -3,6 +3,7 @@ module github.com/hyperledger-labs/cckit
 go 1.17
 
 require (
+	github.com/btcsuite/btcutil v1.0.2
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -15,7 +16,6 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/pseudomuto/protoc-gen-doc v1.3.1
 	go.uber.org/zap v1.14.1
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	google.golang.org/genproto v0.0.0-20210917145530-b395a37504d4
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
@@ -42,6 +42,7 @@ require (
 	github.com/sykesm/zap-logfmt v0.0.3 // indirect
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420 // indirect
 	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678 // indirect
 	golang.org/x/text v0.3.6 // indirect
