@@ -24,7 +24,7 @@ func CreateNonce() string {
 }
 
 func Hash(payload []byte, nonce, channel, chaincode, method, deadline string, pubkey []byte) [32]byte {
-	bb := append(removeSpacesBetweenCommaAndQuotes(payload), nonce...)
+	bb := append(removeSpacesBetweenCommaAndQuotes(payload), nonce...) // resolve the unclear json serialization behavior in protojson package
 	bb = append(bb, channel...)
 	bb = append(bb, chaincode...)
 	bb = append(bb, method...)
