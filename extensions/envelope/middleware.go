@@ -20,6 +20,8 @@ const (
 	invokeType      = "invoke"
 
 	TimeLayout = "2006-01-02T15:04:05.000Z"
+
+	PubKey string = "pubkey" // router context key
 )
 
 // middleware for checking signature that is got in envelop
@@ -32,9 +34,15 @@ func Verify() router.MiddlewareFunc {
 					c.Logger().Sugar().Error(ErrSignatureNotFound)
 					return nil, ErrSignatureNotFound
 				} else {
-					if err := verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
+					var (
+						e   *Envelope
+						err error
+					)
+					if e, err = verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
 						return nil, err
 					}
+					// store corect pubkey in context
+					c.SetParam(PubKey, e.PublicKey)
 				}
 			}
 			return next(c)
@@ -42,41 +50,41 @@ func Verify() router.MiddlewareFunc {
 	}
 }
 
-func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
+func verifyEnvelope(c router.Context, method, payload, envlp []byte) (*Envelope, error) {
 	// parse json envelope format (json is original format for envelope from frontend)
 	data, err := c.Serializer().FromBytesTo(envlp, &Envelope{})
 	if err != nil {
 		c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
-		return err
+		return nil, err
 	}
 	envelope := data.(*Envelope)
 	if envelope.Deadline.AsTime().Unix() != 0 {
 		if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
 			c.Logger().Sugar().Error(ErrDeadlineExpired)
-			return ErrDeadlineExpired
+			return nil, ErrDeadlineExpired
 		}
 	}
 
 	// check method and channel names because envelope can only be used once for channel+chaincode+method combination
 	if string(method) != envelope.Method {
 		c.Logger().Sugar().Error(ErrInvalidMethod)
-		return ErrInvalidMethod
+		return nil, ErrInvalidMethod
 	}
 	if string(c.Stub().GetChannelID()) != envelope.Channel {
 		c.Logger().Sugar().Error(ErrInvalidChannel)
-		return ErrInvalidChannel
+		return nil, ErrInvalidChannel
 	}
 
 	// replay attack check
 	txHash := txNonceKey(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
 	key, err := c.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	bb, err := c.Stub().GetState(key)
 	if bb == nil && err == nil {
 		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
-			return err
+			return nil, err
 		}
 		// convert public key and sig from base58
 		pubkey := base58.Decode(envelope.PublicKey)
@@ -88,14 +96,13 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) error {
 		}
 		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
 			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
-			return ErrCheckSignatureFailed
+			return nil, ErrCheckSignatureFailed
 		}
-		c.SetPubkey(envelope.PublicKey) // set Pubkey from envelope
 	} else {
 		c.Logger().Sugar().Error(ErrTxAlreadyExecuted)
-		return ErrTxAlreadyExecuted
+		return nil, ErrTxAlreadyExecuted
 	}
-	return nil
+	return envelope, nil
 }
 
 func txNonceKey(payload []byte, nonce, channel, chaincode, method, pubKey string) string {

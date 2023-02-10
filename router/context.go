@@ -62,10 +62,6 @@ type (
 		// SetParam sets parameter value.
 		SetParam(name string, value interface{})
 
-		// Pubkey from envelope
-		Pubkey() string
-		SetPubkey(string)
-
 		Event() state.Event
 		UseEvent(state.Event) Context
 	}
@@ -77,7 +73,6 @@ type (
 		state      state.State
 		event      state.Event
 		args       [][]byte
-		pubkey     string
 		params     InterfaceMap
 		serializer serialize.Serializer
 	}
@@ -259,13 +254,4 @@ func (c *context) SetEvent(name string, payload interface{}) error {
 func ContextWithStateCache(ctx Context) Context {
 	clone := ctx.Clone()
 	return clone.UseState(state.WithCache(clone.State()))
-}
-
-// Pubkey from envelope
-func (c *context) Pubkey() string {
-	return c.pubkey
-}
-
-func (c *context) SetPubkey(pk string) {
-	c.pubkey = pk
 }
