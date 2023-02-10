@@ -21,7 +21,7 @@ const (
 
 	TimeLayout = "2006-01-02T15:04:05.000Z"
 
-	PubKey string = "pubkey" // router context key
+	PubKey string = "envelopePubkey" // router context key
 )
 
 // middleware for checking signature that is got in envelop
