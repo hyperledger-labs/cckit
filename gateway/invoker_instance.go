@@ -22,16 +22,14 @@ type (
 
 // NewChaincodeInstanceServiceInvoker
 func NewChaincodeInstanceServiceInvoker(
-	ccInstance ChaincodeInstanceServiceServer, s ...serialize.Serializer) *ChaincodeInstanceServiceInvoker {
-
-	var serializer serialize.Serializer = serialize.DefaultSerializer // set default serializer as proto
-	if len(s) > 0 {
-		serializer = s[0]
-	}
-
+	ccInstance ChaincodeInstanceServiceServer, opts ...InvokerOpt) *ChaincodeInstanceServiceInvoker {
 	c := &ChaincodeInstanceServiceInvoker{
 		ChaincodeInstance: ccInstance,
-		Serializer:        serializer,
+		Serializer:        serialize.DefaultSerializer, // set default serializer as proto
+	}
+
+	for _, opt := range opts {
+		opt(c)
 	}
 
 	return c

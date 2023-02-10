@@ -33,6 +33,8 @@ type (
 	InputOpt   func(ctx context.Context, input *ChaincodeInput) error
 	OutputOpt  func(action InvocationType, response *peer.Response) error
 	EventOpt   func(event *ChaincodeEvent) error
+
+	InvokerOpt func(*ChaincodeInstanceServiceInvoker)
 )
 
 func WithDefaultSigner(defaultSigner msp.SigningIdentity) Opt {
@@ -120,5 +122,11 @@ func WithEventResolver(resolver mapping.EventResolver, fromBytesConverter serial
 			e.Payload = &RawJson{Value: []byte(bb)}
 			return nil
 		})
+	}
+}
+
+func WithInvokerSerializer(s serialize.Serializer) InvokerOpt {
+	return func(c *ChaincodeInstanceServiceInvoker) {
+		c.Serializer = s
 	}
 }
