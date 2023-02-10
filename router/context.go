@@ -79,16 +79,16 @@ type (
 )
 
 // NewContext creates new instance of router.Context
-func NewContext(stub shim.ChaincodeStubInterface, logger *zap.Logger) *context {
+func NewContext(stub shim.ChaincodeStubInterface, serializer serialize.Serializer, logger *zap.Logger) *context {
 	return &context{
 		stub:       stub,
 		logger:     logger,
-		serializer: serialize.DefaultSerializer,
+		serializer: serializer,
 	}
 }
 
 func (c *context) Clone() Context {
-	ctx := NewContext(c.stub, c.logger)
+	ctx := NewContext(c.stub, c.serializer, c.logger)
 	if c.state != nil {
 		ctx.state = c.state.Clone()
 	}
