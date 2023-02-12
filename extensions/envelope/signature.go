@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -23,7 +24,7 @@ func CreateNonce() string {
 }
 
 func Hash(payload []byte, nonce, channel, chaincode, method, deadline string, pubkey []byte) [32]byte {
-	bb := append(payload, nonce...)
+	bb := append(removeSpacesBetweenCommaAndQuotes(payload), nonce...) // resolve the unclear json serialization behavior in protojson package
 	bb = append(bb, channel...)
 	bb = append(bb, chaincode...)
 	bb = append(bb, method...)
@@ -46,4 +47,8 @@ func CheckSig(payload []byte, nonce, channel, chaincode, method, deadline string
 		return ErrCheckSignatureFailed
 	}
 	return nil
+}
+
+func removeSpacesBetweenCommaAndQuotes(s []byte) []byte {
+	return []byte(strings.ReplaceAll(string(s), `", "`, `","`))
 }
