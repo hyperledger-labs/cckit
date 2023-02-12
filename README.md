@@ -15,7 +15,7 @@ key-value pairs in the World State.  In Hyperledger Fabric, smart contracts are 
 * generating access layer for query / invoke chaincodes and chaincode event streaming
 
 It enhances the development experience while providing developers components for creating more readable and secure
-smart contracts. [Getting started]
+smart contracts. [Getting started](docs)
 
 
 ### CCKit features
@@ -32,6 +32,7 @@ smart contracts. [Getting started]
 * Chaincode method [access control](extensions/owner)
 * Signing and verifying chaincode method payload with [envelope](extensions/envelope)
 
+### Examples 
 
 There are several chaincode "official" examples available:
 
@@ -55,6 +56,7 @@ and others
 * [Commercial paper](examples/cpaper) - faithful reimplementation of the official example 
 * [Commercial paper extended example](examples/cpaper_extended) - with protobuf chaincode state schema and other features
 * [ERC-20](examples/erc20) - tokens smart contract, implementing ERC-20 interface
+* [ERC-20 UTXO](examples/erc20_utxo) - tokens smart contract, implementing ERC-20 interface with UTXO state keys
 * [Cars private](examples/private_cars) - car registration chaincode with private data
 * [Payment](examples/payment) - a few examples of chaincodes with encrypted state 
 
@@ -66,7 +68,6 @@ and others
 * [ERC20 token as Hyperledger Fabric Golang chaincode](https://medium.com/@viktornosov/erc20-token-as-hyperledger-fabric-golang-chaincode-d09dfd16a339)
 * [CCKit: Routing and middleware for Hyperledger Fabric Golang chaincode](https://medium.com/@viktornosov/routing-and-middleware-for-developing-hyperledger-fabric-chaincode-written-in-go-90913951bf08)
 * [Developing and testing Hyperledger Fabric smart contracts](https://habr.com/post/426705/) [RUS]
-
 
 ## Installation
 
