@@ -68,7 +68,7 @@ func ReadLocal() func(filename string) ([]byte, error) {
 
 func MustSamples(cc []*Cert, mspId string) []*IdentitySample {
 	ss := make([]*IdentitySample, len(cc))
-	for i, c := range Certificates {
+	for i, c := range cc {
 		ss[i] = &IdentitySample{
 			MspID: mspId,
 			Cert:  c,
@@ -79,7 +79,7 @@ func MustSamples(cc []*Cert, mspId string) []*IdentitySample {
 }
 func MustIdentities(cc []*Cert, mspId string) []*identity.CertIdentity {
 	ii := make([]*identity.CertIdentity, len(cc))
-	for i, c := range Certificates {
+	for i, c := range cc {
 		ii[i] = c.MustIdentity(mspId)
 	}
 
