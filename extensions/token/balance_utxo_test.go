@@ -162,6 +162,30 @@ func (w *Wallet) ExpectLock(amount *big.Int) {
 	})
 }
 
+func (w *Wallet) ExpectLockBatch(amounts []*big.Int) {
+	var balanceOperations []*token.BalanceOperation
+
+	for _, amount := range amounts {
+		balanceOperations = append(balanceOperations, &token.BalanceOperation{
+			Address: w.address,
+			Symbol:  w.symbol,
+			Amount:  token.NewDecimal(amount),
+		})
+	}
+
+	w.cc.Tx(func() {
+		lockIds, err := w.store.LockBatch(w.ctx, balanceOperations)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(len(lockIds)).To(Equal(len(amounts)))
+		for id := range amounts {
+			Expect(lockIds[id].Symbol).To(Equal(w.symbol))
+			Expect(lockIds[id].TxId).NotTo(BeZero())
+			Expect(lockIds[id].Address).To(Equal(w.address))
+		}
+	})
+}
+
 func (w *Wallet) ExpectUnlock() {
 	w.cc.Tx(func() {
 		err := w.store.Unlock(w.ctx, w.lockId)
@@ -319,6 +343,15 @@ var _ = Describe(`UTXO store`, func() {
 		user1Wallet.ExpectBalance(Int50)
 		user2Wallet.ExpectLockedBalance(Int200)
 		user2Wallet.ExpectBalance(Int200)
+	})
+
+	It(`allow to lock batch`, func() {
+		ownerWallet.ExpectMint(Int200)
+		ownerWallet.ExpectLockedBalance(Int600)
+
+		amounts := []*big.Int{Int100, Int50, Int50}
+		ownerWallet.ExpectLockBatch(amounts)
+		ownerWallet.ExpectLockedBalance(token.BigIntSum(Int600, Int200))
 	})
 
 })

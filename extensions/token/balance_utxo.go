@@ -2,6 +2,7 @@ package token
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -14,6 +15,7 @@ var _ BalanceStore = &UTXOStore{}
 var (
 	ErrSenderRecipientEqual = errors.New(`sender recipient equal`)
 	ErrSenderNotEqual       = errors.New(`sender not equal`)
+	ErrOpAddressNotEqual    = errors.New(`operation address not equal`)
 	ErrSymbolNotEqual       = errors.New(`symbol not equal`)
 	ErrRecipientDuplicate   = errors.New(`errors recipient duplicate`)
 )
@@ -287,7 +289,9 @@ func (u *UTXOStore) Mint(ctx router.Context, op *BalanceOperation) error {
 
 // Lock tokens
 func (u *UTXOStore) Lock(ctx router.Context, op *BalanceOperation) (*LockId, error) {
-	// return setLock(ctx, op, true)
+	if err := router.ValidateRequest(op); err != nil {
+		return nil, err
+	}
 
 	outputs, err := u.ListOutputs(ctx, &BalanceId{
 		Symbol:  op.Symbol,
@@ -340,7 +344,109 @@ func (u *UTXOStore) Lock(ctx router.Context, op *BalanceOperation) (*LockId, err
 			return nil, err
 		}
 	}
+
 	return &LockId{lockedOutput.Symbol, lockedOutput.Group, lockedOutput.Address, lockedOutput.TxId}, nil
+}
+
+func (u *UTXOStore) LockBatch(ctx router.Context, ops []*BalanceOperation) ([]*LockId, error) {
+	var (
+		opAddress, symbol string
+		group             []string
+		totalAmount       = big.NewInt(0)
+	)
+
+	for _, op := range ops {
+		if err := router.ValidateRequest(op); err != nil {
+			return nil, err
+		}
+
+		if opAddress == `` {
+			opAddress = op.Address
+		}
+		if op.Address != opAddress {
+			return nil, ErrOpAddressNotEqual
+		}
+
+		if symbol == `` {
+			symbol = op.Symbol
+		}
+		if op.Symbol != symbol {
+			return nil, ErrSymbolNotEqual
+		}
+
+		if len(op.Group) > 0 {
+			panic(`implement me`)
+		}
+
+		opAmount, err := op.Amount.BigInt()
+		if err != nil {
+			return nil, err
+		}
+		totalAmount.Add(totalAmount, opAmount)
+	}
+
+	outputs, err := u.ListOutputs(ctx, &BalanceId{
+		Symbol:  symbol,
+		Group:   group,
+		Address: opAddress,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	useOutputs, outputsAmount, err := selectOutputsForAmount(outputs, totalAmount, false)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, output := range useOutputs {
+		if err := State(ctx).Delete(output.ID()); err != nil {
+			return nil, err
+		}
+	}
+
+	lockIds := make([]*LockId, len(ops))
+
+	for id, op := range ops {
+		txID := ctx.Stub().GetTxID() + fmt.Sprintf(".%v", id)
+
+		lockedOutput := &UTXO{
+			Symbol:  op.Symbol,
+			Group:   strings.Join(op.Group, `,`),
+			Address: op.Address,
+			TxId:    txID,
+			Amount:  op.Amount,
+			Locked:  true,
+			//Meta: transfer.Meta,
+		}
+
+		lockIds[id] = &LockId{
+			Symbol:  op.Symbol,
+			Group:   strings.Join(op.Group, `,`),
+			Address: op.Address,
+			TxId:    txID,
+		}
+
+		if err := State(ctx).Insert(lockedOutput); err != nil {
+			return nil, err
+		}
+	}
+
+	if outputsAmount.Cmp(totalAmount) == 1 {
+		senderChangeOutput := &UTXO{
+			Symbol:  symbol,
+			Group:   strings.Join(group, `,`),
+			Address: opAddress,
+			TxId:    ctx.Stub().GetTxID() + fmt.Sprintf(".%v", len(ops)),
+			Amount:  BigIntSubAsDecimal(outputsAmount, totalAmount),
+			Locked:  false,
+		}
+		if err := State(ctx).Insert(senderChangeOutput); err != nil {
+			return nil, err
+		}
+	}
+
+	return lockIds, nil
 }
 
 func (u *UTXOStore) LockAll(ctx router.Context, op *BalanceOperation) error {
