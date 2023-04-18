@@ -218,7 +218,7 @@ func (s *Impl) Exists(entry interface{}) (bool, error) {
 // List data from state using objectType prefix in composite key, trying to convert to target interface.
 // Keys -  additional components of composite key
 func (s *Impl) List(namespace interface{}, target ...interface{}) (interface{}, error) {
-	stateList, err := NewStateList(target...)
+	stateList, err := NewList(target...)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (s *Impl) normalizeAndTransformKey(namespace interface{}) (Key, Key, error)
 func (s *Impl) ListPaginated(
 	namespace interface{}, pageSize int32, bookmark string, target ...interface{}) (
 	interface{}, *pb.QueryResponseMetadata, error) {
-	stateList, err := NewStateList(target...)
+	stateList, err := NewList(target...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -469,7 +469,7 @@ func (s *Impl) ExistsPrivate(collection string, entry interface{}) (bool, error)
 // If usePrivateDataIterator is true, used private state for iterate over objects
 // if false, used public state for iterate over keys and GetPrivateData for each key
 func (s *Impl) ListPrivate(collection string, usePrivateDataIterator bool, namespace interface{}, target ...interface{}) (interface{}, error) {
-	stateList, err := NewStateList(target...)
+	stateList, err := NewList(target...)
 	if err != nil {
 		return nil, err
 	}

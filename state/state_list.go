@@ -13,14 +13,17 @@ import (
 )
 
 type (
-	StateList struct {
-		itemTarget interface{}
-		listTarget interface{}
-		list       []interface{}
+	List struct {
+		itemTarget interface{}   // type of item
+		listTarget interface{}   // type of item list
+		list       []interface{} // actual lost
 	}
 )
 
-func NewStateList(config ...interface{}) (sl *StateList, err error) {
+// ListItemsField name of field with items in listTarget proto structure setting
+const ListItemsField = `Items`
+
+func NewList(config ...interface{}) (*List, error) {
 	var (
 		itemTarget, listTarget interface{}
 	)
@@ -31,10 +34,11 @@ func NewStateList(config ...interface{}) (sl *StateList, err error) {
 		listTarget = config[1]
 	}
 
-	return &StateList{itemTarget: itemTarget, listTarget: listTarget}, nil
+	return &List{itemTarget: itemTarget, listTarget: listTarget}, nil
 }
 
-func (sl *StateList) Fill(
+// Fill state list from iterator
+func (sl *List) Fill(
 	iter shim.StateQueryIteratorInterface, fromBytesConverter serialize.FromBytesConverter) (list interface{}, err error) {
 	for iter.HasNext() {
 		kv, err := iter.Next()
@@ -50,13 +54,12 @@ func (sl *StateList) Fill(
 	return sl.Get()
 }
 
-func (sl *StateList) Get() (list interface{}, err error) {
-
-	// custom list proto.Message
+func (sl *List) Get() (list interface{}, err error) {
+	// list type is  proto.Message, with predefined Items field
 	if _, isListProto := sl.listTarget.(proto.Message); isListProto {
-
-		customList := proto.Clone(sl.listTarget.(proto.Message))
+		customList := proto.Clone(sl.listTarget.(proto.Message)) // create copy of list type proto message
 		items := reflect.ValueOf(customList).Elem().FieldByName(`Items`)
+
 		for _, v := range sl.list {
 			items.Set(reflect.Append(items, reflect.ValueOf(v)))
 		}
@@ -79,6 +82,6 @@ func (sl *StateList) Get() (list interface{}, err error) {
 	return sl.list, nil
 }
 
-func (sl *StateList) AddElementToList(elem interface{}) {
+func (sl *List) AddElementToList(elem interface{}) {
 	sl.list = append(sl.list, elem)
 }
