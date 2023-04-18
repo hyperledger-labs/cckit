@@ -1,6 +1,7 @@
 package mapping_test
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -59,7 +60,8 @@ var _ = Describe(`State mapping in chaincode with default serializer`, func() {
 		It("Allow to get mapping data by namespace", func() {
 			mapping, err := testdata.EntityWithCompositeIdStateMapping.GetByNamespace(testdata.EntityCompositeIdNamespace)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mapping.Schema()).To(BeEquivalentTo(&schema.EntityWithCompositeId{}))
+			Expect(reflect.TypeOf(mapping.Schema()).String()).To(
+				Equal(reflect.TypeOf(&schema.EntityWithCompositeId{}).String()))
 
 			key, err := mapping.PrimaryKey(&schema.EntityWithCompositeId{
 				IdFirstPart:  create1.IdFirstPart,
