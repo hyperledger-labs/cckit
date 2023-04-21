@@ -21,6 +21,7 @@ type (
 		Mint(router.Context, *BalanceOperation) error
 		Burn(router.Context, *BalanceOperation) error
 		Lock(router.Context, *BalanceOperation) (*LockId, error)
+		LockBatch(router.Context, []*BalanceOperation) ([]*LockId, error)
 		Unlock(router.Context, *LockId) error
 		BurnLock(router.Context, *LockId) error
 		TransferLock(router.Context, *LockId, *TransferOperation) error

@@ -110,6 +110,10 @@ func (s *AccountStore) Lock(ctx router.Context, burn *BalanceOperation) (*LockId
 	return nil, nil
 }
 
+func (u *AccountStore) LockBatch(ctx router.Context, ops []*BalanceOperation) ([]*LockId, error) {
+	return nil, nil
+}
+
 func (s *AccountStore) Unlock(ctx router.Context, id *LockId) error {
 	return nil
 }
