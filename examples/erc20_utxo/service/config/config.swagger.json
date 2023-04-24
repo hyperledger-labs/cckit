@@ -134,7 +134,19 @@
       "type": "object",
       "properties": {
         "total_supply": {
-          "$ref": "#/definitions/tokenDecimal"
+          "$ref": "#/definitions/decimalDecimal"
+        }
+      }
+    },
+    "decimalDecimal": {
+      "type": "object",
+      "properties": {
+        "scale": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "value": {
+          "type": "string"
         }
       }
     },
@@ -168,18 +180,6 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
-        }
-      }
-    },
-    "tokenDecimal": {
-      "type": "object",
-      "properties": {
-        "scale": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "value": {
-          "type": "string"
         }
       }
     }

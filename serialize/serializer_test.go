@@ -18,7 +18,7 @@ import (
 
 func TestState(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "State suite")
+	RunSpecs(t, "Serializer suite")
 }
 
 var (
@@ -36,7 +36,6 @@ var (
 )
 
 var _ = Describe(`Generic serializer`, func() {
-
 	serializer := serialize.DefaultSerializer
 
 	Context(`Bool`, func() {
@@ -104,7 +103,6 @@ var _ = Describe(`Generic serializer`, func() {
 	})
 
 	Context(`Proto`, func() {
-
 		var serializedProto1 []byte
 		It(`serialize`, func() {
 			serializedProto1, err = serializer.ToBytesFrom(ProtoToSerialize)
@@ -125,10 +123,9 @@ var _ = Describe(`Generic serializer`, func() {
 })
 
 var _ = Describe(`Prefer JSON serializer`, func() {
-
 	serializer := serialize.PreferJSONSerializer
-
 	var serializedProtoAsJSON []byte
+
 	It(`serialize (snake_case)`, func() {
 		serializedProtoAsJSON, err = serializer.ToBytesFrom(ProtoToSerialize)
 		Expect(err).NotTo(HaveOccurred())

@@ -2,13 +2,14 @@ syntax = "proto3";
 
 option go_package = "github.com/hyperledger-labs/cckit/extensions/token";
 
-package extensions.token;
+package cckit.extensions.token;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "mwitkow/go-proto-validators/validator.proto";
 
 import "token/balance.proto";
+import "token/decimal/decimal.proto";
 
 service TokenService {
 
@@ -100,7 +101,7 @@ message CreateTokenTypeRequest {
   string name = 2 [(validator.field) = {string_not_empty : true}];
   uint32 decimals = 3 [(validator.field) = {int_lt: 9}]; // from 0 to 8
   TokenGroupType group_type = 4 [(validator.field) = {is_in_enum : true}];;
-  cckit.extensions.token.Decimal  total_supply = 5; // big.Int
+  decimal.Decimal  total_supply = 5; // big.Int
   repeated TokenMetaRequest meta = 6;
 }
 
@@ -115,7 +116,7 @@ message CreateTokenGroupRequest {
   string symbol = 1 [(validator.field) = {string_not_empty : true}];
   repeated string group = 2 [(validator.field) = {repeated_count_min : 1}];
   string name = 3 [(validator.field) = {string_not_empty : true}];
-  cckit.extensions.token.Decimal total_supply = 4; // big.Int
+  decimal.Decimal total_supply = 4; // big.Int
   repeated TokenMetaRequest meta = 5;
 }
 
@@ -140,7 +141,7 @@ message TokenType {
   string symbol = 1;
   string name = 2;
   uint32 decimals = 3;
-  cckit.extensions.token.Decimal total_supply = 4;
+  decimal.Decimal total_supply = 4;
   TokenGroupType group_type = 5;
   repeated TokenMeta meta = 6;
 }
@@ -159,7 +160,7 @@ message TokenGroup {
   string symbol = 1;
   repeated string group = 2;
   string name = 3;
-  cckit.extensions.token.Decimal total_supply = 4;
+  decimal.Decimal total_supply = 4;
   repeated TokenMeta meta = 5;
 }
 

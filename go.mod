@@ -1,6 +1,6 @@
 module github.com/hyperledger-labs/cckit
 
-go 1.17
+go 1.18
 
 require (
 	github.com/btcsuite/btcutil v1.0.2

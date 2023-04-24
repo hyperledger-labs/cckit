@@ -1,15 +1,16 @@
 package mapping_test
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/proto"
 
 	identitytestdata "github.com/hyperledger-labs/cckit/identity/testdata"
 	"github.com/hyperledger-labs/cckit/serialize"
@@ -27,16 +28,15 @@ func TestState(t *testing.T) {
 	RunSpecs(t, "State suite")
 }
 
-var (
-	compositeIDCC, complexIDCC, sliceIDCC, indexesCC, configCC *testcc.MockStub
+var _ = Describe(`State mapping in chaincode with default serializer`, func() {
 
-	Owner = identitytestdata.Certificates[0].MustIdentity(`SOME_MSP`)
-)
-var _ = Describe(`State mapping in chaincode`, func() {
+	var (
+		compositeIDCC, complexIDCC, sliceIDCC, indexesCC, configCC *testcc.MockStub
+		Owner                                                      = identitytestdata.Certificates[0].MustIdentity(`SOME_MSP`)
+	)
 
-	BeforeSuite(func() {
-
-		compositeIDCC = testcc.NewMockStub(`proto`, testdata.NewCompositeIdCC())
+	Describe(`init chaincodes`, func() {
+		compositeIDCC = testcc.NewMockStub(`proto`, testdata.NewCompositeIdCC(serialize.DefaultSerializer))
 		compositeIDCC.From(Owner).Init()
 
 		complexIDCC = testcc.NewMockStub(`complex_id`, testdata.NewComplexIdCC())
@@ -60,7 +60,8 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		It("Allow to get mapping data by namespace", func() {
 			mapping, err := testdata.EntityWithCompositeIdStateMapping.GetByNamespace(testdata.EntityCompositeIdNamespace)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(mapping.Schema()).To(BeEquivalentTo(&schema.EntityWithCompositeId{}))
+			Expect(reflect.TypeOf(mapping.Schema()).String()).To(
+				Equal(reflect.TypeOf(&schema.EntityWithCompositeId{}).String()))
 
 			key, err := mapping.PrimaryKey(&schema.EntityWithCompositeId{
 				IdFirstPart:  create1.IdFirstPart,
@@ -76,25 +77,25 @@ var _ = Describe(`State mapping in chaincode`, func() {
 
 		It("Allow to add data to chaincode state", func(done Done) {
 			events, closer := compositeIDCC.EventSubscription()
-			expectcc.ResponseOk(compositeIDCC.Invoke(`create`, create1))
+			expectcc.ResponseOk(compositeIDCC.Invoke(testdata.CreateFunc, create1))
 
 			expectcc.EventStringerEqual(<-events,
 				`CreateEntityWithCompositeId`, create1, compositeIDCC.Serializer)
 
-			expectcc.ResponseOk(compositeIDCC.Invoke(`create`, create2))
-			expectcc.ResponseOk(compositeIDCC.Invoke(`create`, create3))
+			expectcc.ResponseOk(compositeIDCC.Invoke(testdata.CreateFunc, create2))
+			expectcc.ResponseOk(compositeIDCC.Invoke(testdata.CreateFunc, create3))
 
 			_ = closer()
 			close(done)
 		})
 
 		It("Disallow to insert entries with same primary key", func() {
-			expectcc.ResponseError(compositeIDCC.Invoke(`create`, create1), state.ErrKeyAlreadyExists)
+			expectcc.ResponseError(compositeIDCC.Invoke(testdata.CreateFunc, create1), state.ErrKeyAlreadyExists)
 		})
 
 		It("Allow to get entry list", func() {
 			// default serializer should serialize proto to / from binary representation
-			entities := expectcc.PayloadIs(compositeIDCC.Query(`list`),
+			entities := expectcc.PayloadIs(compositeIDCC.Query(testdata.ListFunc),
 				&schema.EntityWithCompositeIdList{}, serialize.DefaultSerializer).(*schema.EntityWithCompositeIdList)
 			Expect(len(entities.Items)).To(Equal(3))
 			Expect(entities.Items[0].Name).To(Equal(create1.Name))
@@ -102,7 +103,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		})
 
 		It("Allow to get entry raw protobuf", func() {
-			dataFromCC := compositeIDCC.Query(`get`,
+			dataFromCC := compositeIDCC.Query(testdata.GetFunc,
 				&schema.EntityCompositeId{
 					IdFirstPart:  create1.IdFirstPart,
 					IdSecondPart: create1.IdSecondPart,
@@ -122,7 +123,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 		})
 
 		It("Allow update data in chaincode state", func() {
-			expectcc.ResponseOk(compositeIDCC.Invoke(`update`, &schema.UpdateEntityWithCompositeId{
+			expectcc.ResponseOk(compositeIDCC.Invoke(testdata.UpdateFunc, &schema.UpdateEntityWithCompositeId{
 				IdFirstPart:  create1.IdFirstPart,
 				IdSecondPart: create1.IdSecondPart,
 				IdThirdPart:  create1.IdThirdPart,
@@ -131,7 +132,7 @@ var _ = Describe(`State mapping in chaincode`, func() {
 			}))
 
 			entityFromCC := expectcc.PayloadIs(
-				compositeIDCC.Query(`get`, &schema.EntityCompositeId{
+				compositeIDCC.Query(testdata.GetFunc, &schema.EntityCompositeId{
 					IdFirstPart:  create1.IdFirstPart,
 					IdSecondPart: create1.IdSecondPart,
 					IdThirdPart:  create1.IdThirdPart,
@@ -150,22 +151,21 @@ var _ = Describe(`State mapping in chaincode`, func() {
 				IdThirdPart:  create1.IdThirdPart,
 			}
 
-			expectcc.ResponseOk(compositeIDCC.Invoke(`delete`, toDelete))
+			expectcc.ResponseOk(compositeIDCC.Invoke(testdata.DeleteFunc, toDelete))
 			ee := expectcc.PayloadIs(
-				compositeIDCC.Invoke(`list`),
+				compositeIDCC.Invoke(testdata.ListFunc),
 				&schema.EntityWithCompositeIdList{}, compositeIDCC.Serializer).(*schema.EntityWithCompositeIdList)
 
 			Expect(len(ee.Items)).To(Equal(2))
-			expectcc.ResponseError(compositeIDCC.Invoke(`get`, toDelete), state.ErrKeyNotFound)
+			expectcc.ResponseError(compositeIDCC.Invoke(testdata.GetFunc, toDelete), state.ErrKeyNotFound)
 		})
 
 		It("Allow to insert entry once more time", func() {
-			expectcc.ResponseOk(compositeIDCC.Invoke(`create`, create1))
+			expectcc.ResponseOk(compositeIDCC.Invoke(testdata.CreateFunc, create1))
 		})
 	})
 
 	Describe(`Entity with complex id`, func() {
-
 		ent1 := testdata.CreateEntityWithComplextId[0]
 
 		It("Allow to add data to chaincode state", func() {
@@ -389,5 +389,32 @@ var _ = Describe(`State mapping in chaincode`, func() {
 			Expect(confFromCC.Field2).To(Equal(configSample.Field2))
 		})
 
+	})
+})
+
+var _ = Describe(`State mapping in chaincode with JSON serializer`, func() {
+
+	var (
+		compositeIDCC *testcc.MockStub
+		Owner         = identitytestdata.Certificates[0].MustIdentity(`SOME_MSP`)
+	)
+
+	Describe("init chaincode", func() {
+		compositeIDCC = testcc.NewMockStub(`proto`, testdata.NewCompositeIdCC(serialize.PreferJSONSerializer))
+		compositeIDCC.Serializer = serialize.PreferJSONSerializer // need to set for correct invoking
+		compositeIDCC.From(Owner).Init()
+	})
+
+	It("Allow to add data to chaincode state", func() {
+		expectcc.ResponseOk(compositeIDCC.Invoke(testdata.CreateFunc, testdata.CreateEntityWithCompositeId[0]))
+	})
+
+	It("Allow to get entry list", func() {
+		res := compositeIDCC.Query(testdata.ListFunc)
+		Expect(string(res.Payload)[0:1]).To(Equal(`{`)) // json serialized
+		entities := expectcc.JSONPayloadIs(res, &schema.EntityWithCompositeIdList{}).(*schema.EntityWithCompositeIdList)
+		Expect(len(entities.Items)).To(Equal(1))
+		Expect(entities.Items[0].Name).To(Equal(testdata.CreateEntityWithCompositeId[0].Name))
+		Expect(entities.Items[0].Value).To(BeNumerically("==", testdata.CreateEntityWithCompositeId[0].Value))
 	})
 })

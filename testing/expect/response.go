@@ -61,6 +61,10 @@ func PayloadIs(response peer.Response, target interface{}, fromBytesConverters .
 	return data
 }
 
+func JSONPayloadIs(response peer.Response, target interface{}) interface{} {
+	return PayloadIs(response, target, serialize.PreferJSONSerializer)
+}
+
 // PayloadString expects payload content is string
 func PayloadString(response peer.Response, expectedValue string) string {
 	ResponseOk(response)

@@ -420,6 +420,18 @@
     }
   },
   "definitions": {
+    "decimalDecimal": {
+      "type": "object",
+      "properties": {
+        "scale": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -485,7 +497,7 @@
           "type": "string"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenDecimal"
+          "$ref": "#/definitions/decimalDecimal"
         },
         "meta": {
           "type": "array",
@@ -512,25 +524,13 @@
           "$ref": "#/definitions/tokenTokenGroupType"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenDecimal"
+          "$ref": "#/definitions/decimalDecimal"
         },
         "meta": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/tokenTokenMetaRequest"
           }
-        }
-      }
-    },
-    "tokenDecimal": {
-      "type": "object",
-      "properties": {
-        "scale": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "value": {
-          "type": "string"
         }
       }
     },
@@ -561,7 +561,7 @@
           "type": "string"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenDecimal"
+          "$ref": "#/definitions/decimalDecimal"
         },
         "meta": {
           "type": "array",
@@ -642,7 +642,7 @@
           "format": "int64"
         },
         "total_supply": {
-          "$ref": "#/definitions/tokenDecimal"
+          "$ref": "#/definitions/decimalDecimal"
         },
         "group_type": {
           "$ref": "#/definitions/tokenTokenGroupType"

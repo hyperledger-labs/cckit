@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/state"
 )
@@ -59,7 +60,7 @@ func (u *UTXOStore) Get(ctx router.Context, balanceId *BalanceId) (*Balance, err
 		Address: balanceId.Address,
 		Symbol:  balanceId.Symbol,
 		Group:   balanceId.Group,
-		Amount:  NewDecimal(amount),
+		Amount:  decimal.New(amount),
 	}
 
 	return balance, nil
@@ -89,7 +90,7 @@ func (u *UTXOStore) GetLocked(ctx router.Context, balanceId *BalanceId) (*Balanc
 		Symbol:  balanceId.Symbol,
 		Group:   balanceId.Group,
 		Address: balanceId.Address,
-		Amount:  NewDecimal(amount),
+		Amount:  decimal.New(amount),
 	}
 
 	return balance, nil
@@ -153,7 +154,7 @@ func (u *UTXOStore) Transfer(ctx router.Context, transfer *TransferOperation) er
 			Group:   strings.Join(transfer.Group, `,`),
 			Address: transfer.Sender,
 			TxId:    txID,
-			Amount:  BigIntSubAsDecimal(outputsAmount, transferAmount),
+			Amount:  decimal.BigIntSubAsDecimal(outputsAmount, transferAmount),
 			Locked:  false,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
@@ -261,7 +262,7 @@ func (u *UTXOStore) TransferBatch(ctx router.Context, transfers []*TransferOpera
 			Group:   strings.Join(group, `,`),
 			Address: sender,
 			TxId:    txID,
-			Amount:  BigIntSubAsDecimal(outputsAmount, totalAmount),
+			Amount:  decimal.BigIntSubAsDecimal(outputsAmount, totalAmount),
 			Locked:  false,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
@@ -333,7 +334,7 @@ func (u *UTXOStore) Lock(ctx router.Context, op *BalanceOperation) (*LockId, err
 			Group:   strings.Join(op.Group, `,`),
 			Address: op.Address,
 			TxId:    ctx.Stub().GetTxID() + ".1",
-			Amount:  BigIntSubAsDecimal(outputsAmount, opAmount),
+			Amount:  decimal.BigIntSubAsDecimal(outputsAmount, opAmount),
 			Locked:  false,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
@@ -499,7 +500,7 @@ func burn(ctx router.Context, burn *BalanceOperation, locked bool) error {
 			Group:   strings.Join(burn.Group, `,`),
 			Address: burn.Address,
 			TxId:    ctx.Stub().GetTxID(),
-			Amount:  BigIntSubAsDecimal(outputsAmount, burnAmount),
+			Amount:  decimal.BigIntSubAsDecimal(outputsAmount, burnAmount),
 			Locked:  locked,
 		}
 		if err := State(ctx).Insert(senderChangeOutput); err != nil {
