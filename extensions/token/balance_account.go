@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/state"
 )
@@ -30,7 +31,7 @@ func (s *AccountStore) Get(ctx router.Context, id *BalanceId) (*Balance, error) 
 				Address: id.Address,
 				Symbol:  id.Symbol,
 				Group:   id.Group,
-				Amount:  NewDecimal(big.NewInt(0)),
+				Amount:  decimal.New(big.NewInt(0)),
 			}, nil
 		}
 		return nil, err
@@ -154,7 +155,7 @@ func (s *AccountStore) add(ctx router.Context, op *BalanceOperation) (*Balance, 
 		Address: op.Address,
 		Symbol:  op.Symbol,
 		Group:   op.Group,
-		Amount:  BigIntSubAsDecimal(curBalanceAmount, toAdd),
+		Amount:  decimal.BigIntSubAsDecimal(curBalanceAmount, toAdd),
 	}
 
 	if err = State(ctx).Put(newBalance); err != nil {
@@ -185,7 +186,7 @@ func (s *AccountStore) sub(ctx router.Context, op *BalanceOperation) (*Balance, 
 		Address: op.Address,
 		Symbol:  op.Symbol,
 		Group:   op.Group,
-		Amount:  BigIntSubAsDecimal(balAmount, opAmount),
+		Amount:  decimal.BigIntSubAsDecimal(balAmount, opAmount),
 	}
 
 	if err = State(ctx).Put(newBalance); err != nil {

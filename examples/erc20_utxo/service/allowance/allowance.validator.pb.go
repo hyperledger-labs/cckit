@@ -7,6 +7,7 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/hyperledger-labs/cckit/extensions/token"
+	_ "github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/genproto/googleapis/api/annotations"

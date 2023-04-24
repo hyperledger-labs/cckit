@@ -6,7 +6,7 @@ package config
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/hyperledger-labs/cckit/extensions/token"
+	_ "github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	_ "google.golang.org/protobuf/types/known/emptypb"

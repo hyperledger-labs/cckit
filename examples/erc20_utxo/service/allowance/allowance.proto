@@ -8,6 +8,7 @@ import "google/protobuf/empty.proto";
 import "mwitkow/go-proto-validators/validator.proto";
 
 import "token/balance.proto";
+import "token/decimal/decimal.proto";
 
 service AllowanceService {
   // Returns the remaining number of tokens that spender will be allowed to spend on behalf of owner through transfersender.
@@ -40,7 +41,7 @@ message ApproveRequest {
   string spender = 2 [(validator.field) = {string_not_empty : true}];
   string symbol = 3 [(validator.field) = {string_not_empty : true}];
   repeated string group = 4;
-  cckit.extensions.token.Decimal amount = 5 [(validator.field) = {string_not_empty : true}];
+  cckit.extensions.token.decimal.Decimal amount = 5 [(validator.field) = {string_not_empty : true}];
 }
 
 message TransferFromRequest {
@@ -48,7 +49,7 @@ message TransferFromRequest {
   string recipient = 2 [(validator.field) = {string_not_empty : true}];
   string symbol = 3 [(validator.field) = {string_not_empty : true}];
   repeated string group = 4;
-  cckit.extensions.token.Decimal amount = 5 [(validator.field) = {string_not_empty : true}];
+  cckit.extensions.token.decimal.Decimal amount = 5 [(validator.field) = {string_not_empty : true}];
 }
 
 message TransferFromResponse {
@@ -56,7 +57,7 @@ message TransferFromResponse {
   string recipient = 2;
   string symbol = 3 ;
   repeated string group = 4;
-  cckit.extensions.token.Decimal amount = 5;
+  cckit.extensions.token.decimal.Decimal amount = 5;
 }
 
 // Id: Allowance identifier
@@ -73,7 +74,7 @@ message Allowance {
   string  spender = 2;
   string symbol = 3 ;
   repeated string group = 4;
-  cckit.extensions.token.Decimal amount = 5;
+  cckit.extensions.token.decimal.Decimal amount = 5;
 }
 
 message Operation {
@@ -81,7 +82,7 @@ message Operation {
   string  spender = 2;
   string symbol = 3 ;
   repeated string group = 4;
-  cckit.extensions.token.Decimal amount = 5;
+  cckit.extensions.token.decimal.Decimal amount = 5;
 }
 
 // List:
@@ -95,7 +96,7 @@ message Approved  {
   string spender = 2;
   string symbol = 3 ;
   repeated string group = 4;
-  cckit.extensions.token.Decimal amount = 5;
+  cckit.extensions.token.decimal.Decimal amount = 5;
 }
 
 // Event: TransferredFrom event is emitted when TransferFrom method has been invoked
@@ -105,5 +106,5 @@ message TransferredFrom  {
   string recipient = 3;
   string symbol = 4 ;
   repeated string group = 5;
-  cckit.extensions.token.Decimal amount = 6;
+  cckit.extensions.token.decimal.Decimal amount = 6;
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/hyperledger-labs/cckit/examples/erc20_utxo/service/config"
 	"github.com/hyperledger-labs/cckit/extensions/account"
 	"github.com/hyperledger-labs/cckit/extensions/token"
+	"github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	"github.com/hyperledger-labs/cckit/identity"
 	"github.com/hyperledger-labs/cckit/identity/testdata"
 	testcc "github.com/hyperledger-labs/cckit/testing"
@@ -98,13 +99,13 @@ var _ = Describe(`ERC`, func() {
 						&token.BalanceId{Address: user1Address, Symbol: erc20_utxo.Token.Symbol}),
 				&token.Balance{}).(*token.Balance)
 
-			Expect(b.Amount).To(Equal(token.NewDecimal(big.NewInt(0))))
+			Expect(b.Amount).To(Equal(decimal.New(big.NewInt(0))))
 		})
 
 	})
 
 	Context(`transfer`, func() {
-		var transferAmount = token.NewDecimal(big.NewInt(100))
+		var transferAmount = decimal.New(big.NewInt(100))
 
 		It(`Disallow to transfer balance by user with zero balance`, func() {
 			expectcc.ResponseError(
@@ -150,7 +151,7 @@ var _ = Describe(`ERC`, func() {
 
 	Context(`Allowance`, func() {
 
-		var allowAmount = token.NewDecimal(big.NewInt(50))
+		var allowAmount = decimal.New(big.NewInt(50))
 
 		It(`Allow to approve amount by owner for spender even if balance is zero`, func() {
 			a := expectcc.PayloadIs(

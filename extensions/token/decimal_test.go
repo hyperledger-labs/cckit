@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/hyperledger-labs/cckit/extensions/token"
+	"github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	"github.com/hyperledger-labs/cckit/serialize"
 )
 
@@ -14,7 +15,7 @@ var (
 		Group:   "b",
 		Address: "c",
 		TxId:    "d",
-		Amount: &token.Decimal{
+		Amount: &decimal.Decimal{
 			Value: `12345`,
 		},
 	}

@@ -6,7 +6,7 @@ package examples.erc20_utxo.service.config;
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
-import "token/balance.proto";
+import "token/decimal/decimal.proto";
 
 // ERC-20 Config getters
 service ConfigService {
@@ -54,5 +54,5 @@ message DecimalsResponse {
 }
 
 message TotalSupplyResponse {
-  cckit.extensions.token.Decimal total_supply = 1;
+  cckit.extensions.token.decimal.Decimal total_supply = 1;
 }
