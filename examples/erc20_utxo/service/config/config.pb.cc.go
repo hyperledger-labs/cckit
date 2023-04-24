@@ -3,10 +3,10 @@
 
 /*
 Package config contains
-  *   chaincode methods names {service_name}Chaincode_{method_name}
-  *   chaincode interface definition {service_name}Chaincode
-  *   chaincode gateway definition {service_name}}Gateway
-  *   chaincode service to cckit router registration func
+  - chaincode methods names {service_name}Chaincode_{method_name}
+  - chaincode interface definition {service_name}Chaincode
+  - chaincode gateway definition {service_name}}Gateway
+  - chaincode service to cckit router registration func
 */
 package config
 

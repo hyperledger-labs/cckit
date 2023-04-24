@@ -1,4 +1,4 @@
-package token
+package decimal
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ func (x *Decimal) BigInt() (*big.Int, error) {
 	return bigInt, nil
 }
 
-func NewDecimal(val *big.Int, scale ...int32) *Decimal {
+func New(val *big.Int, scale ...int32) *Decimal {
 	d := &Decimal{
 		Value: val.String(),
 	}
@@ -32,7 +32,7 @@ func BigIntSum(a, b *big.Int) *big.Int {
 }
 
 func BigIntSumAsDecimal(a, b *big.Int, scale ...int32) *Decimal {
-	return NewDecimal(BigIntSum(a, b), scale...)
+	return New(BigIntSum(a, b), scale...)
 }
 
 func BigIntSub(a, b *big.Int) *big.Int {
@@ -40,5 +40,5 @@ func BigIntSub(a, b *big.Int) *big.Int {
 }
 
 func BigIntSubAsDecimal(a, b *big.Int, scale ...int32) *Decimal {
-	return NewDecimal(BigIntSub(a, b), scale...)
+	return New(BigIntSub(a, b), scale...)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/hyperledger-labs/cckit/extensions/account"
 	"github.com/hyperledger-labs/cckit/extensions/token"
+	"github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	"github.com/hyperledger-labs/cckit/router"
 	"github.com/hyperledger-labs/cckit/state"
 )
@@ -120,7 +121,7 @@ func (s *Service) TransferFrom(ctx router.Context, req *TransferFromRequest) (*T
 			req.Amount, allowance.Amount, ErrAllowanceInsufficient)
 	}
 
-	allowance.Amount = token.BigIntSubAsDecimal(curAmount, reqAmount)
+	allowance.Amount = decimal.BigIntSubAsDecimal(curAmount, reqAmount)
 
 	// sub from allowance
 	if err := State(ctx).Put(allowance); err != nil {

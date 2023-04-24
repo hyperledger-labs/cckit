@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "github.com/hyperledger-labs/cckit/extensions/token/decimal";
+
+package cckit.extensions.token.decimal;
+
+message Decimal  {
+  int32  scale = 1; // scale ( same as decimal in ERC-20 )
+  string value = 2; // big.Int as string
+}

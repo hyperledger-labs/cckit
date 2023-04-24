@@ -8,6 +8,7 @@ import (
 	"github.com/hyperledger-labs/cckit/examples/erc20_utxo/service/config"
 	"github.com/hyperledger-labs/cckit/extensions/account"
 	"github.com/hyperledger-labs/cckit/extensions/token"
+	"github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	"github.com/hyperledger-labs/cckit/router"
 )
 
@@ -16,7 +17,7 @@ var (
 		Name:        `SomeToken`,
 		Symbol:      `@`,
 		Decimals:    2,
-		TotalSupply: token.NewDecimal(big.NewInt(10000000)),
+		TotalSupply: decimal.New(big.NewInt(10000000)),
 	}
 )
 

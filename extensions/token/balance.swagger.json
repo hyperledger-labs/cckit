@@ -173,6 +173,18 @@
     }
   },
   "definitions": {
+    "decimalDecimal": {
+      "type": "object",
+      "properties": {
+        "scale": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -236,7 +248,7 @@
           "title": "account address"
         },
         "amount": {
-          "$ref": "#/definitions/tokenDecimal",
+          "$ref": "#/definitions/decimalDecimal",
           "title": "Balance amount"
         }
       },
@@ -253,18 +265,6 @@
         }
       },
       "title": "List: balances"
-    },
-    "tokenDecimal": {
-      "type": "object",
-      "properties": {
-        "scale": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "value": {
-          "type": "string"
-        }
-      }
     },
     "tokenMeta": {
       "type": "object",
@@ -315,7 +315,7 @@
           }
         },
         "amount": {
-          "$ref": "#/definitions/tokenDecimal"
+          "$ref": "#/definitions/decimalDecimal"
         },
         "meta": {
           "type": "array",
@@ -344,7 +344,7 @@
           }
         },
         "amount": {
-          "$ref": "#/definitions/tokenDecimal"
+          "$ref": "#/definitions/decimalDecimal"
         },
         "meta": {
           "type": "array",

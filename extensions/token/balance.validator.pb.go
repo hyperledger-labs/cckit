@@ -6,6 +6,7 @@ package token
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/hyperledger-labs/cckit/extensions/token/decimal"
 	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -18,9 +19,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *Decimal) Validate() error {
-	return nil
-}
 func (this *TransferRequest) Validate() error {
 	if this.Recipient == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Recipient", fmt.Errorf(`value '%v' must not be an empty string`, this.Recipient))
