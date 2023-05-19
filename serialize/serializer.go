@@ -13,9 +13,12 @@ type (
 	TargetType     string
 
 	GenericSerializer struct {
-		Supports      []SuppportedType
-		Target        TargetType
-		UseProtoNames bool // to use proto field name instead of lowerCamelCase name in JSON field names
+		Supports        []SuppportedType
+		Target          TargetType
+		UseProtoNames   bool // to use proto field name instead of lowerCamelCase name in JSON field names
+		UseEnumNumbers  bool // to use numbers instead of strings for enums
+		EmitUnpopulated bool // Emit the default value for unpopulated feilds
+
 	}
 
 	StringSerializer struct {
@@ -46,9 +49,11 @@ var (
 	}
 
 	PreferJSONSerializer = &GenericSerializer{
-		Supports:      []SuppportedType{AnyType},
-		Target:        PreferJSON,
-		UseProtoNames: true,
+		Supports:        []SuppportedType{AnyType},
+		Target:          PreferJSON,
+		UseProtoNames:   true,
+		UseEnumNumbers:  true,
+		EmitUnpopulated: true,
 	}
 	KeySerializer = &StringSerializer{}
 
@@ -62,7 +67,7 @@ func (g *GenericSerializer) ToBytesFrom(entry interface{}) ([]byte, error) {
 
 	case proto.Message:
 		if g.Target == PreferJSON {
-			mo := &protojson.MarshalOptions{UseProtoNames: g.UseProtoNames}
+			mo := &protojson.MarshalOptions{UseProtoNames: g.UseProtoNames, UseEnumNumbers: g.UseEnumNumbers, EmitUnpopulated: g.EmitUnpopulated}
 			return JSONProtoMarshal(entryType, mo)
 		} else {
 			return BinaryProtoMarshal(entryType)
