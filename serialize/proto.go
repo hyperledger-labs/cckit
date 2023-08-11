@@ -31,7 +31,7 @@ func (ps *BinaryProtoSerializer) FromBytes(serialized []byte, target proto.Messa
 }
 
 func (js *JSONProtoSerializer) ToBytes(entry proto.Message) ([]byte, error) {
-	mo := &protojson.MarshalOptions{UseProtoNames: js.UseProtoNames}
+	mo := &protojson.MarshalOptions{UseProtoNames: js.UseProtoNames, EmitUnpopulated: true}
 	return JSONProtoMarshal(entry, mo)
 }
 
