@@ -15,12 +15,14 @@ type (
 	BalanceStore interface {
 		Get(router.Context, *BalanceId) (*Balance, error)
 		GetLocked(router.Context, *BalanceId) (*Balance, error)
+		GetUTXO(router.Context, *UTXOId) (*UTXO, error)
 		List(router.Context, *TokenId) ([]*Balance, error)
 		Transfer(router.Context, *TransferOperation) error
 		TransferBatch(router.Context, []*TransferOperation) error
 		Mint(router.Context, *BalanceOperation) error
 		Burn(router.Context, *BalanceOperation) error
 		Lock(router.Context, *BalanceOperation) (*LockId, error)
+		LockBatch(router.Context, []*BalanceOperation) ([]*LockId, error)
 		Unlock(router.Context, *LockId) error
 		BurnLock(router.Context, *LockId) error
 		TransferLock(router.Context, *LockId, *TransferOperation) error

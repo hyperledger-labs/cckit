@@ -37,18 +37,20 @@ func Hash(payload []byte, nonce, channel, chaincode, method, deadline string, pu
 func CreateSig(payload []byte, nonce, channel, chaincode, method, deadline string, privateKey []byte) ([]byte, []byte) {
 	pubKey := ed25519.PrivateKey(privateKey).Public()
 	hashed := Hash(payload, nonce, channel, chaincode, method, deadline, []byte(pubKey.(ed25519.PublicKey)))
-	sig := ed25519.Sign(ed25519.PrivateKey(privateKey), hashed[:])
-	return []byte(pubKey.(ed25519.PublicKey)), sig
+	sig := ed25519.Sign(privateKey, hashed[:])
+	return pubKey.(ed25519.PublicKey), sig
 }
 
 func CheckSig(payload []byte, nonce, channel, chaincode, method, deadline string, pubKey []byte, sig []byte) error {
 	hashed := Hash(payload, nonce, channel, chaincode, method, deadline, pubKey)
-	if !ed25519.Verify(ed25519.PublicKey(pubKey), hashed[:], sig) {
+	if !ed25519.Verify(pubKey, hashed[:], sig) {
 		return ErrCheckSignatureFailed
 	}
 	return nil
 }
 
 func removeSpacesBetweenCommaAndQuotes(s []byte) []byte {
-	return []byte(strings.ReplaceAll(string(s), `", "`, `","`))
+	removed := strings.ReplaceAll(string(s), `", "`, `","`)
+	removed = strings.ReplaceAll(removed, `"}, {"`, `"},{"`)
+	return []byte(strings.ReplaceAll(removed, `], "`, `],"`))
 }
