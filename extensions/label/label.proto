@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package extensions.label;
+
+option go_package = "github.com/hyperledger-labs/cckit/extensions/label";
+
+import "mwitkow/go-proto-validators/validator.proto";
+
+// label - container for name/value content
+message Label {
+  string key = 1 [(validator.field) = {length_gt: 1}];
+  string value = 2 [(validator.field) = {length_gt: 1}];
+}
+
+// Metadata - type for integrate to other objects
+message Metadata {
+  repeated Label labels = 1;
+}
