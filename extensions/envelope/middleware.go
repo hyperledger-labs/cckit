@@ -18,31 +18,34 @@ const (
 
 	nonceObjectType = "nonce"
 	invokeType      = "invoke"
+	initType        = "init"
 
 	TimeLayout = "2006-01-02T15:04:05.000Z"
 
 	PubKey string = "envelopePubkey" // router context key
 )
 
-// middleware for checking signature that is got in envelop
+// Verify is a middleware for checking signature in envelop
 func Verify() router.MiddlewareFunc {
 	return func(next router.HandlerFunc, pos ...int) router.HandlerFunc {
 		return func(c router.Context) (interface{}, error) {
 			if c.Handler().Type == invokeType {
 				iArgs := c.GetArgs()
-				if len(iArgs) == 2 {
-					c.Logger().Sugar().Error(ErrSignatureNotFound)
-					return nil, ErrSignatureNotFound
-				} else {
-					var (
-						e   *Envelope
-						err error
-					)
-					if e, err = verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
-						return nil, err
+				if string(iArgs[methodNamePos]) != initType {
+					if len(iArgs) == 2 {
+						c.Logger().Sugar().Error(ErrSignatureNotFound)
+						return nil, ErrSignatureNotFound
+					} else {
+						var (
+							e   *Envelope
+							err error
+						)
+						if e, err = verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
+							return nil, err
+						}
+						// store correct pubkey in context
+						c.SetParam(PubKey, e.PublicKey)
 					}
-					// store corect pubkey in context
-					c.SetParam(PubKey, e.PublicKey)
 				}
 			}
 			return next(c)
@@ -58,6 +61,7 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) (*Envelope,
 		return nil, err
 	}
 	envelope := data.(*Envelope)
+
 	if envelope.Deadline.AsTime().Unix() != 0 {
 		if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
 			c.Logger().Sugar().Error(ErrDeadlineExpired)
@@ -70,7 +74,7 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) (*Envelope,
 		c.Logger().Sugar().Error(ErrInvalidMethod)
 		return nil, ErrInvalidMethod
 	}
-	if string(c.Stub().GetChannelID()) != envelope.Channel {
+	if c.Stub().GetChannelID() != envelope.Channel {
 		c.Logger().Sugar().Error(ErrInvalidChannel)
 		return nil, ErrInvalidChannel
 	}
@@ -95,7 +99,8 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) (*Envelope,
 			deadline = envelope.Deadline.AsTime().Format(TimeLayout)
 		}
 		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
-			c.Logger().Sugar().Error(ErrCheckSignatureFailed)
+			c.Logger().Error(ErrCheckSignatureFailed.Error(), zap.String("payload", string(payload)), zap.Any("envelope", envelope))
+			//c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return nil, ErrCheckSignatureFailed
 		}
 	} else {
