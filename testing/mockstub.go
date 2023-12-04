@@ -466,9 +466,7 @@ func (stub *MockStub) DelPrivateData(collection string, key string) error {
 		return errors.Errorf("Collection %s not found.", collection)
 	}
 
-	if _, ok := m[key]; !ok {
-		return errors.Errorf("Key %s not found.", key)
-	}
+	// If m is nil or there is no such element, delete is a no-op.
 	delete(m, key)
 
 	for elem := stub.PrivateKeys[collection].Front(); elem != nil; elem = elem.Next() {
