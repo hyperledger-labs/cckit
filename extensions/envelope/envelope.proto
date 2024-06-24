@@ -18,4 +18,5 @@ message Envelope {
   string channel = 7;
   string chaincode = 8;
   string method = 9;
+  string signature_alg = 10;
 }

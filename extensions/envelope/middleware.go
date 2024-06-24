@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/hyperledger-labs/cckit/router"
 	"go.uber.org/zap"
+
+	"github.com/hyperledger-labs/cckit/router"
 )
 
 const (
@@ -26,68 +27,68 @@ const (
 )
 
 // Verify is a middleware for checking signature in envelop
-func Verify() router.MiddlewareFunc {
+func Verify(signer *Signer) router.MiddlewareFunc {
 	return func(next router.HandlerFunc, pos ...int) router.HandlerFunc {
-		return func(c router.Context) (interface{}, error) {
-			if c.Handler().Type == invokeType {
-				iArgs := c.GetArgs()
+		return func(ctx router.Context) (interface{}, error) {
+			if ctx.Handler().Type == invokeType {
+				iArgs := ctx.GetArgs()
 				if string(iArgs[methodNamePos]) != initType {
 					if len(iArgs) == 2 {
-						c.Logger().Sugar().Error(ErrSignatureNotFound)
+						ctx.Logger().Sugar().Error(ErrSignatureNotFound)
 						return nil, ErrSignatureNotFound
 					} else {
 						var (
 							e   *Envelope
 							err error
 						)
-						if e, err = verifyEnvelope(c, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
+						if e, err = verifyEnvelope(ctx, signer, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
 							return nil, err
 						}
 						// store correct pubkey in context
-						c.SetParam(PubKey, e.PublicKey)
+						ctx.SetParam(PubKey, e.PublicKey)
 					}
 				}
 			}
-			return next(c)
+			return next(ctx)
 		}
 	}
 }
 
-func verifyEnvelope(c router.Context, method, payload, envlp []byte) (*Envelope, error) {
+func verifyEnvelope(ctx router.Context, signer *Signer, method, payload, envlp []byte) (*Envelope, error) {
 	// parse json envelope format (json is original format for envelope from frontend)
-	data, err := c.Serializer().FromBytesTo(envlp, &Envelope{})
+	data, err := ctx.Serializer().FromBytesTo(envlp, &Envelope{})
 	if err != nil {
-		c.Logger().Error(`convert from bytes failed:`, zap.Error(err))
+		ctx.Logger().Error(`convert from bytes failed:`, zap.Error(err))
 		return nil, err
 	}
 	envelope := data.(*Envelope)
 
 	if envelope.Deadline.AsTime().Unix() != 0 {
 		if envelope.Deadline.AsTime().Unix() < time.Now().Unix() {
-			c.Logger().Sugar().Error(ErrDeadlineExpired)
+			ctx.Logger().Sugar().Error(ErrDeadlineExpired)
 			return nil, ErrDeadlineExpired
 		}
 	}
 
 	// check method and channel names because envelope can only be used once for channel+chaincode+method combination
 	if string(method) != envelope.Method {
-		c.Logger().Sugar().Error(ErrInvalidMethod)
+		ctx.Logger().Sugar().Error(ErrInvalidMethod)
 		return nil, ErrInvalidMethod
 	}
-	if c.Stub().GetChannelID() != envelope.Channel {
-		c.Logger().Sugar().Error(ErrInvalidChannel)
+	if ctx.Stub().GetChannelID() != envelope.Channel {
+		ctx.Logger().Sugar().Error(ErrInvalidChannel)
 		return nil, ErrInvalidChannel
 	}
 
 	// replay attack check
 	txHash := txNonceKey(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, envelope.PublicKey)
-	key, err := c.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
+	key, err := ctx.Stub().CreateCompositeKey(nonceObjectType, []string{txHash})
 	if err != nil {
 		return nil, err
 	}
-	bb, err := c.Stub().GetState(key)
+	bb, err := ctx.Stub().GetState(key)
 	if bb == nil && err == nil {
-		if err := c.Stub().PutState(key, []byte{'0'}); err != nil {
+		if err := ctx.Stub().PutState(key, []byte{'0'}); err != nil {
 			return nil, err
 		}
 		// convert public key and sig from base58
@@ -98,13 +99,13 @@ func verifyEnvelope(c router.Context, method, payload, envlp []byte) (*Envelope,
 		if envelope.Deadline != nil {
 			deadline = envelope.Deadline.AsTime().Format(TimeLayout)
 		}
-		if err := CheckSig(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
-			c.Logger().Error(ErrCheckSignatureFailed.Error(), zap.String("payload", string(payload)), zap.Any("envelope", envelope))
+		if err := signer.CheckSignature(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
+			ctx.Logger().Error(ErrCheckSignatureFailed.Error(), zap.String("payload", string(payload)), zap.Any("envelope", envelope))
 			//c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return nil, ErrCheckSignatureFailed
 		}
 	} else {
-		c.Logger().Sugar().Error(ErrTxAlreadyExecuted)
+		ctx.Logger().Sugar().Error(ErrTxAlreadyExecuted)
 		return nil, ErrTxAlreadyExecuted
 	}
 	return envelope, nil
