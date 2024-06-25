@@ -55,12 +55,12 @@ func (b *DefaultSigner) Sign(
 	}
 
 	hashed := b.Hash(payload, nonce, channel, chaincode, method, deadline, pubKey)
-	return b.Crypto.Sign(hashed, privateKey)
+	return b.Crypto.Sign(privateKey, hashed)
 }
 
 func (b *DefaultSigner) CheckSignature(payload []byte, nonce, channel, chaincode, method, deadline string, pubKey []byte, sig []byte) error {
 	hashed := b.Hash(payload, nonce, channel, chaincode, method, deadline, pubKey)
-	if !b.Crypto.Verify(pubKey, hashed, sig) {
+	if err := b.Crypto.Verify(pubKey, hashed, sig); err != nil {
 		return ErrCheckSignatureFailed
 	}
 	return nil

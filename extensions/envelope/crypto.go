@@ -4,14 +4,15 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 )
 
 type Crypto interface {
 	GenerateKey() (publicKey, privateKey []byte, err error)
 	Hash([]byte) []byte
-	Sign(hash, privateKey []byte) ([]byte, error)
-	Verify(publicKey, msg, signature []byte) bool
+	Sign(privateKey, hash []byte) ([]byte, error)
+	Verify(publicKey, hash, signature []byte) error
 	PublicKey(privateKey []byte) ([]byte, error)
 }
 
@@ -29,7 +30,7 @@ func (ed *Ed25519) GenerateKey() (publicKey, privateKey []byte, err error) {
 	return publicKey, privateKey, nil
 }
 
-func (ed *Ed25519) Sign(hash, privateKey []byte) (signature []byte, err error) {
+func (ed *Ed25519) Sign(privateKey, hash []byte) (signature []byte, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("sign: %v", r)
@@ -43,8 +44,11 @@ func (ed *Ed25519) Hash(msg []byte) []byte {
 	return h[:]
 }
 
-func (ed *Ed25519) Verify(publicKey, msg, signature []byte) bool {
-	return ed25519.Verify(publicKey, msg, signature)
+func (ed *Ed25519) Verify(publicKey, hash, signature []byte) error {
+	if !ed25519.Verify(publicKey, hash, signature) {
+		return errors.New(`invalid signature`)
+	}
+	return nil
 }
 
 func (ed *Ed25519) PublicKey(privateKey []byte) ([]byte, error) {
