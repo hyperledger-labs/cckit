@@ -10,34 +10,34 @@ import (
 )
 
 type (
-	Signer interface {
-		CreateNonce() string
-		Hash(payload []byte, nonce, channel, chaincode, method, deadline string, publicKey []byte) []byte
-		Sign(payload []byte, nonce, channel, chaincode, method, deadline string, privateKey []byte) ([]byte, error)
-		CheckSignature(payload []byte, nonce, channel, chaincode, method, deadline string, publicKey []byte, sig []byte) error
-		Crypto() Crypto
+	Verifier interface {
+		Verify(payload []byte, nonce, channel, chaincode, method, deadline string, publicKey []byte, sig []byte) error
 	}
 
-	DefaultSigner struct {
+	DefaultVerifier struct {
 		crypto Crypto
 	}
 )
 
-func NewSigner(crypto Crypto) *DefaultSigner {
-	return &DefaultSigner{crypto: crypto}
+func NewVerifier(crypto Crypto) *DefaultVerifier {
+	return &DefaultVerifier{crypto: crypto}
 }
 
-func removeSpacesBetweenCommaAndQuotes(s []byte) []byte {
-	removed := strings.ReplaceAll(string(s), `", "`, `","`)
-	removed = strings.ReplaceAll(removed, `"}, {"`, `"},{"`)
-	return []byte(strings.ReplaceAll(removed, `], "`, `],"`))
+func Sign(crypto Crypto, payload []byte, nonce, channel, chaincode, method, deadline string, privateKey []byte) ([]byte, error) {
+	pubKey, err := crypto.PublicKey(privateKey)
+	if err != nil {
+		return nil, fmt.Errorf(`extract public key: %w`, err)
+	}
+
+	return crypto.Sign(privateKey,
+		crypto.Hash(PrepareToHash(payload, nonce, channel, chaincode, method, deadline, pubKey)))
 }
 
-func (s *DefaultSigner) CreateNonce() string {
+func CreateNonce() string {
 	return strconv.Itoa(int(time.Now().Unix()))
 }
 
-func (s *DefaultSigner) PrepareToHash(payload []byte, nonce, channel, chaincode, method, deadline string, pubkey []byte) []byte {
+func PrepareToHash(payload []byte, nonce, channel, chaincode, method, deadline string, pubkey []byte) []byte {
 	bb := append(removeSpacesBetweenCommaAndQuotes(payload), nonce...) // resolve the unclear json serialization behavior in protojson package
 	bb = append(bb, channel...)
 	bb = append(bb, chaincode...)
@@ -48,28 +48,20 @@ func (s *DefaultSigner) PrepareToHash(payload []byte, nonce, channel, chaincode,
 	return bb
 }
 
-func (s *DefaultSigner) Hash(payload []byte, nonce, channel, chaincode, method, deadline string, pubkey []byte) []byte {
-	return s.crypto.Hash(s.PrepareToHash(payload, nonce, channel, chaincode, method, deadline, pubkey))
+func removeSpacesBetweenCommaAndQuotes(s []byte) []byte {
+	removed := strings.ReplaceAll(string(s), `", "`, `","`)
+	removed = strings.ReplaceAll(removed, `"}, {"`, `"},{"`)
+	return []byte(strings.ReplaceAll(removed, `], "`, `],"`))
 }
 
-func (s *DefaultSigner) Sign(
-	payload []byte, nonce, channel, chaincode, method, deadline string, privateKey []byte) ([]byte, error) {
-	pubKey, err := s.crypto.PublicKey(privateKey)
-	if err != nil {
-		return nil, fmt.Errorf(`extract public key: %w`, err)
-	}
+//func (s *DefaultVerifier) Hash(payload []byte, nonce, channel, chaincode, method, deadline string, pubkey []byte) []byte {
+//	return s.crypto.Hash(PrepareToHash(payload, nonce, channel, chaincode, method, deadline, pubkey))
+//}
 
-	hashed := s.Hash(payload, nonce, channel, chaincode, method, deadline, pubKey)
-	return s.crypto.Sign(privateKey, hashed)
-}
-
-func (s *DefaultSigner) CheckSignature(payload []byte, nonce, channel, chaincode, method, deadline string, pubKey []byte, sig []byte) error {
-	hashed := s.Hash(payload, nonce, channel, chaincode, method, deadline, pubKey)
-	if err := s.crypto.Verify(pubKey, hashed, sig); err != nil {
+func (s *DefaultVerifier) Verify(payload []byte, nonce, channel, chaincode, method, deadline string, pubKey []byte, sig []byte) error {
+	if err := s.crypto.Verify(pubKey,
+		s.crypto.Hash(PrepareToHash(payload, nonce, channel, chaincode, method, deadline, pubKey)), sig); err != nil {
 		return ErrCheckSignatureFailed
 	}
 	return nil
-}
-func (s *DefaultSigner) Crypto() Crypto {
-	return s.crypto
 }

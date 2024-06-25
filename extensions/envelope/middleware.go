@@ -27,7 +27,7 @@ const (
 )
 
 // Verify is a middleware for checking signature in envelop
-func Verify(signer Signer) router.MiddlewareFunc {
+func Verify(verifier Verifier) router.MiddlewareFunc {
 	return func(next router.HandlerFunc, pos ...int) router.HandlerFunc {
 		return func(ctx router.Context) (interface{}, error) {
 			if ctx.Handler().Type == invokeType {
@@ -41,7 +41,7 @@ func Verify(signer Signer) router.MiddlewareFunc {
 							e   *Envelope
 							err error
 						)
-						if e, err = verifyEnvelope(ctx, signer, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
+						if e, err = verifyEnvelope(ctx, verifier, iArgs[methodNamePos], iArgs[payloadPos], iArgs[envelopePos]); err != nil {
 							return nil, err
 						}
 						// store correct pubkey in context
@@ -54,7 +54,7 @@ func Verify(signer Signer) router.MiddlewareFunc {
 	}
 }
 
-func verifyEnvelope(ctx router.Context, signer Signer, method, payload, envlp []byte) (*Envelope, error) {
+func verifyEnvelope(ctx router.Context, verifier Verifier, method, payload, envlp []byte) (*Envelope, error) {
 	// parse json envelope format (json is original format for envelope from frontend)
 	data, err := ctx.Serializer().FromBytesTo(envlp, &Envelope{})
 	if err != nil {
@@ -99,7 +99,7 @@ func verifyEnvelope(ctx router.Context, signer Signer, method, payload, envlp []
 		if envelope.Deadline != nil {
 			deadline = envelope.Deadline.AsTime().Format(TimeLayout)
 		}
-		if err := signer.CheckSignature(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
+		if err := verifier.Verify(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
 			ctx.Logger().Error(ErrCheckSignatureFailed.Error(), zap.String("payload", string(payload)), zap.Any("envelope", envelope))
 			return nil, ErrCheckSignatureFailed
 		}
