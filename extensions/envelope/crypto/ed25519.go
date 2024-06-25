@@ -1,4 +1,4 @@
-package envelope
+package crypto
 
 import (
 	"crypto/ed25519"
@@ -7,14 +7,6 @@ import (
 	"errors"
 	"fmt"
 )
-
-type Crypto interface {
-	GenerateKey() (publicKey, privateKey []byte, err error)
-	Hash([]byte) []byte
-	Sign(privateKey, hash []byte) ([]byte, error)
-	Verify(publicKey, hash, signature []byte) error
-	PublicKey(privateKey []byte) ([]byte, error)
-}
 
 func NewEd25519() *Ed25519 {
 	return &Ed25519{}

@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	e "github.com/hyperledger-labs/cckit/extensions/envelope"
+	"github.com/hyperledger-labs/cckit/extensions/envelope/crypto"
 	"github.com/hyperledger-labs/cckit/serialize"
 )
 
@@ -28,14 +29,14 @@ var (
 
 var _ = Describe(`Envelope`, func() {
 
-	crypto := e.NewEd25519()
-	verifier := e.NewVerifier(crypto)
+	c := crypto.NewEd25519()
+	verifier := e.NewVerifier(c)
 
 	Describe("Verifier", func() {
 		It("Allow to verify valid signature", func() {
 			nonce := e.CreateNonce()
-			publicKey, privateKey, _ := crypto.GenerateKey()
-			sig, err := e.Sign(crypto, payload, nonce, channel, chaincode, methodInvoke, deadline.String(), privateKey)
+			publicKey, privateKey, _ := c.GenerateKey()
+			sig, err := e.Sign(c, payload, nonce, channel, chaincode, methodInvoke, deadline.String(), privateKey)
 			Expect(err).NotTo(HaveOccurred())
 			err = verifier.Verify(payload, nonce, channel, chaincode, methodInvoke, deadline.String(), publicKey, sig)
 			Expect(err).NotTo(HaveOccurred())
@@ -43,8 +44,8 @@ var _ = Describe(`Envelope`, func() {
 
 		It("Disallow to verify signature with invalid payload", func() {
 			nonce := e.CreateNonce()
-			publicKey, privateKey, _ := crypto.GenerateKey()
-			sig, _ := e.Sign(crypto, payload, nonce, channel, chaincode, methodInvoke, deadline.String(), privateKey)
+			publicKey, privateKey, _ := c.GenerateKey()
+			sig, _ := e.Sign(c, payload, nonce, channel, chaincode, methodInvoke, deadline.String(), privateKey)
 			invalidPayload := []byte("invalid payload")
 			err := verifier.Verify(invalidPayload, nonce, channel, chaincode, methodInvoke, deadline.String(), publicKey, sig)
 			Expect(err).Should(MatchError(e.ErrSignatureCheckFailed))
@@ -54,7 +55,7 @@ var _ = Describe(`Envelope`, func() {
 	Describe("Handle base64 envelop", func() {
 
 		It("Allow to parse base64 envelop", func() {
-			_, envelope := createEnvelope(crypto, payload, channel, chaincode, methodInvoke, deadline)
+			_, envelope := createEnvelope(c, payload, channel, chaincode, methodInvoke, deadline)
 			jj, _ := json.Marshal(envelope)
 			b64 := base64.StdEncoding.EncodeToString(jj)
 			bb, err := e.DecodeEnvelope([]byte(b64))
@@ -67,13 +68,13 @@ var _ = Describe(`Envelope`, func() {
 	Describe("Signature verification", func() {
 
 		It("Allow to verify valid signature", func() {
-			serializedEnvelope, _ := createEnvelope(crypto, payload, channel, chaincode, methodInvoke, deadline)
+			serializedEnvelope, _ := createEnvelope(c, payload, channel, chaincode, methodInvoke, deadline)
 			resp := NewNewEnvelopCCMock(verifier).Invoke(methodInvoke, payload, serializedEnvelope)
 			Expect(resp.Status).To(BeNumerically("==", 200))
 		})
 
 		It("Allow to verify valid signature without deadline", func() {
-			serializedEnvelope, _ := createEnvelope(crypto, payload, channel, chaincode, methodInvoke)
+			serializedEnvelope, _ := createEnvelope(c, payload, channel, chaincode, methodInvoke)
 			resp := NewNewEnvelopCCMock(verifier).Invoke(methodInvoke, payload, serializedEnvelope)
 			Expect(resp.Status).To(BeNumerically("==", 200))
 		})
@@ -99,7 +100,7 @@ var _ = Describe(`Envelope`, func() {
 		})
 
 		It("Disallow to verify signature with invalid payload", func() {
-			serializedEnvelope, _ := createEnvelope(crypto, payload, channel, chaincode, methodInvoke, deadline)
+			serializedEnvelope, _ := createEnvelope(c, payload, channel, chaincode, methodInvoke, deadline)
 			invalidPayload := []byte("invalid payload")
 
 			resp := NewNewEnvelopCCMock(verifier).Invoke(methodInvoke, invalidPayload, serializedEnvelope)
@@ -107,14 +108,14 @@ var _ = Describe(`Envelope`, func() {
 		})
 
 		It("Disallow to verify signature with invalid method", func() {
-			serializedEnvelope, _ := createEnvelope(crypto, payload, channel, chaincode, "invalid method", deadline)
+			serializedEnvelope, _ := createEnvelope(c, payload, channel, chaincode, "invalid method", deadline)
 
 			resp := NewNewEnvelopCCMock(verifier).Invoke(methodInvoke, payload, serializedEnvelope)
 			Expect(resp.Status).To(BeNumerically("==", 500))
 		})
 
 		It("Disallow to verify signature with invalid channel", func() {
-			serializedEnvelope, _ := createEnvelope(crypto, payload, "invalid channel", chaincode, methodInvoke, deadline)
+			serializedEnvelope, _ := createEnvelope(c, payload, "invalid channel", chaincode, methodInvoke, deadline)
 
 			resp := NewNewEnvelopCCMock(verifier).Invoke(methodInvoke, payload, serializedEnvelope)
 			Expect(resp.Status).To(BeNumerically("==", 500))
@@ -129,11 +130,11 @@ var _ = Describe(`Envelope`, func() {
 
 	Describe("Nonce verification (replay attack)", func() {
 		It("Disallow to execute tx with the same parameters (nonce, payload, pubkey)", func() {
-			publicKey, privateKey, _ := crypto.GenerateKey()
+			publicKey, privateKey, _ := c.GenerateKey()
 			nonce := "thesamenonce"
 
-			hashToSign := crypto.Hash(e.PrepareToHash(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format(e.TimeLayout), publicKey))
-			sig, _ := crypto.Sign(privateKey, hashToSign)
+			hashToSign := c.Hash(e.PrepareToHash(payload, nonce, channel, chaincode, methodInvoke, deadline.AsTime().Format(e.TimeLayout), publicKey))
+			sig, _ := c.Sign(privateKey, hashToSign)
 			envelope := &e.Envelope{
 				PublicKey:  base58.Encode([]byte(publicKey)),
 				Signature:  base58.Encode(sig),
@@ -159,8 +160,8 @@ var _ = Describe(`Envelope`, func() {
 
 })
 
-func createEnvelope(crypto e.Crypto, payload []byte, channel, chaincode, method string, deadline ...*timestamppb.Timestamp) ([]byte, *e.Envelope) {
-	publicKey, privateKey, _ := e.NewEd25519().GenerateKey()
+func createEnvelope(c crypto.Crypto, payload []byte, channel, chaincode, method string, deadline ...*timestamppb.Timestamp) ([]byte, *e.Envelope) {
+	publicKey, privateKey, _ := crypto.NewEd25519().GenerateKey()
 	nonce := e.CreateNonce()
 
 	envelope := &e.Envelope{
@@ -176,10 +177,10 @@ func createEnvelope(crypto e.Crypto, payload []byte, channel, chaincode, method 
 		envelope.Deadline = deadline[0]
 		formatDeadline = envelope.Deadline.AsTime().Format(e.TimeLayout)
 	}
-	hashToSign := crypto.Hash(e.PrepareToHash(payload, nonce, channel, chaincode, method, formatDeadline, publicKey))
+	hashToSign := c.Hash(e.PrepareToHash(payload, nonce, channel, chaincode, method, formatDeadline, publicKey))
 	envelope.HashToSign = base58.Encode(hashToSign)
 
-	sig, _ := crypto.Sign(privateKey, hashToSign)
+	sig, _ := c.Sign(privateKey, hashToSign)
 	envelope.Signature = base58.Encode(sig)
 
 	serializedEnvelope, _ := serialize.PreferJSONSerializer.ToBytesFrom(envelope)
