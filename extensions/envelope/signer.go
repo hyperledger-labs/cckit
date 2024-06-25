@@ -15,15 +15,16 @@ type (
 		Hash(payload []byte, nonce, channel, chaincode, method, deadline string, publicKey []byte) []byte
 		Sign(payload []byte, nonce, channel, chaincode, method, deadline string, privateKey []byte) ([]byte, error)
 		CheckSignature(payload []byte, nonce, channel, chaincode, method, deadline string, publicKey []byte, sig []byte) error
+		Crypto() Crypto
 	}
 
 	DefaultSigner struct {
-		Crypto Crypto
+		crypto Crypto
 	}
 )
 
 func NewSigner(crypto Crypto) *DefaultSigner {
-	return &DefaultSigner{Crypto: crypto}
+	return &DefaultSigner{crypto: crypto}
 }
 
 func removeSpacesBetweenCommaAndQuotes(s []byte) []byte {
@@ -44,24 +45,27 @@ func (b *DefaultSigner) Hash(payload []byte, nonce, channel, chaincode, method, 
 	bb = append(bb, deadline...)
 	b58Pubkey := base58.Encode(pubkey)
 	bb = append(bb, b58Pubkey...)
-	return b.Crypto.Hash(bb)
+	return b.crypto.Hash(bb)
 }
 
 func (b *DefaultSigner) Sign(
 	payload []byte, nonce, channel, chaincode, method, deadline string, privateKey []byte) ([]byte, error) {
-	pubKey, err := b.Crypto.PublicKey(privateKey)
+	pubKey, err := b.crypto.PublicKey(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf(`extract public key: %w`, err)
 	}
 
 	hashed := b.Hash(payload, nonce, channel, chaincode, method, deadline, pubKey)
-	return b.Crypto.Sign(privateKey, hashed)
+	return b.crypto.Sign(privateKey, hashed)
 }
 
 func (b *DefaultSigner) CheckSignature(payload []byte, nonce, channel, chaincode, method, deadline string, pubKey []byte, sig []byte) error {
 	hashed := b.Hash(payload, nonce, channel, chaincode, method, deadline, pubKey)
-	if err := b.Crypto.Verify(pubKey, hashed, sig); err != nil {
+	if err := b.crypto.Verify(pubKey, hashed, sig); err != nil {
 		return ErrCheckSignatureFailed
 	}
 	return nil
+}
+func (b *DefaultSigner) Crypto() Crypto {
+	return b.crypto
 }
