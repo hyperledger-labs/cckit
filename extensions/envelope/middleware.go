@@ -27,7 +27,7 @@ const (
 )
 
 // Verify is a middleware for checking signature in envelop
-func Verify(signer *Signer) router.MiddlewareFunc {
+func Verify(signer Signer) router.MiddlewareFunc {
 	return func(next router.HandlerFunc, pos ...int) router.HandlerFunc {
 		return func(ctx router.Context) (interface{}, error) {
 			if ctx.Handler().Type == invokeType {
@@ -54,7 +54,7 @@ func Verify(signer *Signer) router.MiddlewareFunc {
 	}
 }
 
-func verifyEnvelope(ctx router.Context, signer *Signer, method, payload, envlp []byte) (*Envelope, error) {
+func verifyEnvelope(ctx router.Context, signer Signer, method, payload, envlp []byte) (*Envelope, error) {
 	// parse json envelope format (json is original format for envelope from frontend)
 	data, err := ctx.Serializer().FromBytesTo(envlp, &Envelope{})
 	if err != nil {
@@ -101,7 +101,6 @@ func verifyEnvelope(ctx router.Context, signer *Signer, method, payload, envlp [
 		}
 		if err := signer.CheckSignature(payload, envelope.Nonce, envelope.Channel, envelope.Chaincode, envelope.Method, deadline, pubkey, sig); err != nil {
 			ctx.Logger().Error(ErrCheckSignatureFailed.Error(), zap.String("payload", string(payload)), zap.Any("envelope", envelope))
-			//c.Logger().Sugar().Error(ErrCheckSignatureFailed)
 			return nil, ErrCheckSignatureFailed
 		}
 	} else {

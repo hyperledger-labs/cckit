@@ -53,8 +53,8 @@ var _ = Describe(`Envelop with Ed25519`, func() {
 		})
 
 		It("Allow to create nonces", func() {
-			nonce1 := e.CreateNonce()
-			nonce2 := e.CreateNonce()
+			nonce1 := signer.CreateNonce()
+			nonce2 := signer.CreateNonce()
 
 			Expect(nonce1).NotTo(BeEmpty())
 			Expect(nonce2).NotTo(BeEmpty())
@@ -63,13 +63,13 @@ var _ = Describe(`Envelop with Ed25519`, func() {
 
 		It("Allow to create signature", func() {
 			_, privateKey, _ := ed25519.GenerateKey()
-			sig, err := signer.Sign(payload, e.CreateNonce(), channel, chaincode, methodInvoke, deadline.String(), privateKey)
+			sig, err := signer.Sign(payload, signer.CreateNonce(), channel, chaincode, methodInvoke, deadline.String(), privateKey)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(sig)).To(Equal(64))
 		})
 
 		It("Allow to check valid signature", func() {
-			nonce := e.CreateNonce()
+			nonce := signer.CreateNonce()
 			publicKey, privateKey, _ := ed25519.GenerateKey()
 			sig, err := signer.Sign(payload, nonce, channel, chaincode, methodInvoke, deadline.String(), privateKey)
 			Expect(err).NotTo(HaveOccurred())
@@ -78,7 +78,7 @@ var _ = Describe(`Envelop with Ed25519`, func() {
 		})
 
 		It("Disallow to check signature with invalid payload", func() {
-			nonce := e.CreateNonce()
+			nonce := signer.CreateNonce()
 			publicKey, privateKey, _ := ed25519.GenerateKey()
 			sig, _ := signer.Sign(payload, nonce, channel, chaincode, methodInvoke, deadline.String(), privateKey)
 			invalidPayload := []byte("invalid payload")
@@ -213,9 +213,9 @@ var _ = Describe(`Envelop with Ed25519`, func() {
 
 })
 
-func createEnvelope(signer *e.Signer, payload []byte, channel, chaincode, method string, deadline ...*timestamppb.Timestamp) ([]byte, *e.Envelope) {
+func createEnvelope(signer *e.DefaultSigner, payload []byte, channel, chaincode, method string, deadline ...*timestamppb.Timestamp) ([]byte, *e.Envelope) {
 	publicKey, privateKey, _ := e.NewEd25519().GenerateKey()
-	nonce := e.CreateNonce()
+	nonce := signer.CreateNonce()
 
 	envelope := &e.Envelope{
 		PublicKey: base58.Encode([]byte(publicKey)),

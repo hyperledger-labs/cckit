@@ -11,7 +11,7 @@ type Crypto interface {
 	GenerateKey() (publicKey, privateKey []byte, err error)
 	Hash([]byte) []byte
 	Sign(hash, privateKey []byte) ([]byte, error)
-	Verify([]byte) bool
+	Verify(publicKey, msg, signature []byte) bool
 	PublicKey(privateKey []byte) ([]byte, error)
 }
 
@@ -43,8 +43,8 @@ func (ed *Ed25519) Hash(msg []byte) []byte {
 	return h[:]
 }
 
-func (ed *Ed25519) Verify([]byte) bool {
-	return false
+func (ed *Ed25519) Verify(publicKey, msg, signature []byte) bool {
+	return ed25519.Verify(publicKey, msg, signature)
 }
 
 func (ed *Ed25519) PublicKey(privateKey []byte) ([]byte, error) {
